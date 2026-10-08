@@ -41,7 +41,7 @@ function EditAsset() {
 
   return (
     <div>
-      <button onClick={() => navigate({ to: '/assets/$assetId', params: { assetId } })}
+      <button type="button" onClick={() => navigate({ to: '/assets/$assetId', params: { assetId } })}
         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft size={15} />返回详情
       </button>

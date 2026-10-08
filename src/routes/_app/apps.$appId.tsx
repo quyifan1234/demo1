@@ -76,7 +76,7 @@ function AppDetail() {
 
   return (
     <div>
-      <button onClick={() => navigate({ to: '/apps' })} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
+      <button type="button" onClick={() => navigate({ to: '/apps' })} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft size={15} />返回应用列表
       </button>
 

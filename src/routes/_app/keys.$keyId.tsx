@@ -79,7 +79,7 @@ function KeyDetail() {
 
   return (
     <div>
-      <button onClick={() => navigate({ to: '/keys' })}
+      <button type="button" onClick={() => navigate({ to: '/keys' })}
         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft size={15} />返回密钥列表
       </button>
@@ -101,7 +101,7 @@ function KeyDetail() {
           <div className="relative">
             <Input type={show ? 'text' : 'password'} value={value} onChange={(e) => setValue(e.target.value)}
               placeholder="粘贴密钥" className="pr-10 font-mono" />
-            <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+            <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
               onClick={() => setShow(!show)} title={show ? '隐藏' : '显示'}>
               {show ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -116,7 +116,7 @@ function KeyDetail() {
           <div className="flex flex-wrap gap-2 mt-2">
             {apps.length === 0 ? <span className="text-sm text-muted-foreground">还没有应用</span> :
               apps.map((a) => (
-                <button key={a.id} onClick={() => setSelApps(curApps.includes(a.id) ? curApps.filter((x) => x !== a.id) : [...curApps, a.id])}
+                <button type="button" key={a.id} onClick={() => setSelApps(curApps.includes(a.id) ? curApps.filter((x) => x !== a.id) : [...curApps, a.id])}
                   className={`px-3 py-1.5 rounded-full text-sm border ${curApps.includes(a.id) ? 'bg-primary/10 text-primary border-primary/30 font-medium' : 'bg-muted text-muted-foreground border-transparent'}`}>
                   {a.name}
                 </button>

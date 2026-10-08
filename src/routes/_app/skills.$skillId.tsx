@@ -103,7 +103,7 @@ function SkillDetail() {
 
   return (
     <div>
-      <button onClick={() => navigate({ to: '/skills' })}
+      <button type="button" onClick={() => navigate({ to: '/skills' })}
         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft size={15} />返回技能列表
       </button>
@@ -144,7 +144,7 @@ function SkillDetail() {
                 <div className="flex gap-2 flex-wrap mt-2">
                   {tags.map((t) => (
                     <Badge key={t} variant="secondary" className="gap-1 rounded-full">{t}
-                      <button onClick={() => setTags(tags.filter((x) => x !== t))}><X size={12} /></button>
+                      <button type="button" aria-label="Remove tag" onClick={() => setTags(tags.filter((x) => x !== t))}><X size={12} /></button>
                     </Badge>
                   ))}
                 </div>
@@ -155,7 +155,7 @@ function SkillDetail() {
               <div className="flex flex-wrap gap-2 mt-2">
                 {apps.length === 0 ? <span className="text-sm text-muted-foreground">还没有应用</span> :
                   apps.map((a) => (
-                    <button key={a.id} onClick={() => setSelApps(curApps.includes(a.id) ? curApps.filter((x) => x !== a.id) : [...curApps, a.id])}
+                    <button type="button" key={a.id} onClick={() => setSelApps(curApps.includes(a.id) ? curApps.filter((x) => x !== a.id) : [...curApps, a.id])}
                       className={`px-3 py-1.5 rounded-full text-sm border ${curApps.includes(a.id) ? 'bg-primary/10 text-primary border-primary/30 font-medium' : 'bg-muted text-muted-foreground border-transparent'}`}>
                       {a.name}
                     </button>
