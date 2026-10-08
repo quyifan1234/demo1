@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Check, Eye, EyeOff, Layers } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -27,6 +27,7 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const doneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (ready && user) navigate({ to: '/', replace: true });
@@ -44,7 +45,8 @@ function LoginPage() {
       if (mode === 'signin') await signIn(email.trim(), password);
       else await signUp(email.trim(), password, inviteCode);
       setDone(true);
-      setTimeout(() => navigate({ to: '/', replace: true }), 600);
+      if (doneTimeoutRef.current) clearTimeout(doneTimeoutRef.current);
+      doneTimeoutRef.current = setTimeout(() => navigate({ to: '/', replace: true }), 600);
     } catch (err) {
       setError(err instanceof Error ? err.message : '操作失败');
     } finally {
