@@ -1,6 +1,6 @@
 import { supabase } from '@/supabase/client';
 import type { Database } from '@/supabase/types';
-import { requireUserId } from './helpers';
+import { requireUserId, ensureWritten } from './helpers';
 
 type KeyRow = Database['public']['Tables']['api_keys']['Row'];
 type KeyInsert = Database['public']['Tables']['api_keys']['Insert'];
@@ -28,8 +28,7 @@ export async function createKey(
     .insert({ ...payload, user_id: uid })
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('写入失败：请确认已登录');
-  return data[0];
+  return ensureWritten(data, '写入')[0];
 }
 
 export async function updateKey(userId: string, id: string, patch: KeyUpdate): Promise<KeyRow> {
@@ -41,8 +40,7 @@ export async function updateKey(userId: string, id: string, patch: KeyUpdate): P
     .eq('user_id', uid)
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('更新失败：记录不存在或无权修改');
-  return data[0];
+  return ensureWritten(data, '更新')[0];
 }
 
 export async function deleteKey(userId: string, id: string): Promise<void> {
@@ -54,7 +52,7 @@ export async function deleteKey(userId: string, id: string): Promise<void> {
     .eq('user_id', uid)
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('删除失败：记录不存在或无权删除');
+  ensureWritten(data, '删除');
 }
 
 export async function listKeyLinks(userId: string): Promise<LinkRow[]> {
@@ -78,7 +76,7 @@ export async function linkKeyToApp(
     .insert({ user_id: uid, app_id: appId, key_id: keyId })
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('绑定失败：请确认已登录');
+  ensureWritten(data, '绑定');
 }
 
 export async function unlinkKeyFromApp(userId: string, linkId: string): Promise<void> {
@@ -90,7 +88,7 @@ export async function unlinkKeyFromApp(userId: string, linkId: string): Promise<
     .eq('user_id', uid)
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('解绑失败：记录不存在或无权删除');
+  ensureWritten(data, '解绑');
 }
 
 export type { KeyRow, LinkRow };

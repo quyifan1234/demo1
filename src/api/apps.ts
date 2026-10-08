@@ -1,6 +1,6 @@
 import { supabase } from '@/supabase/client';
 import type { Database } from '@/supabase/types';
-import { requireUserId } from './helpers';
+import { requireUserId, ensureWritten } from './helpers';
 
 type AppRow = Database['public']['Tables']['ai_apps']['Row'];
 type AppInsert = Database['public']['Tables']['ai_apps']['Insert'];
@@ -27,8 +27,7 @@ export async function createApp(
     .insert({ ...payload, user_id: uid })
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('写入失败：请确认已登录且数据归属当前用户');
-  return data[0];
+  return ensureWritten(data, '写入')[0];
 }
 
 export async function updateApp(
@@ -44,8 +43,7 @@ export async function updateApp(
     .eq('user_id', uid)
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('更新失败：记录不存在或无权修改');
-  return data[0];
+  return ensureWritten(data, '更新')[0];
 }
 
 export async function deleteApp(userId: string, id: string): Promise<void> {
@@ -57,7 +55,7 @@ export async function deleteApp(userId: string, id: string): Promise<void> {
     .eq('user_id', uid)
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('删除失败：记录不存在或无权删除');
+  ensureWritten(data, '删除');
 }
 
 export type { AppRow };
