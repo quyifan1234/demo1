@@ -35,7 +35,7 @@ function KeysPage() {
     return () => { t.forEach(clearTimeout); t.clear(); };
   }, []);
 
-  const platforms = useMemo(() => ['全部', ...Array.from(new Set(keys.map((k) => k.platform).filter(Boolean) as string[]))], [keys]);
+  const platforms = useMemo(() => ['全部', ...Array.from(new Set(keys.map((k) => k.platform).filter((p): p is string => Boolean(p))))], [keys]);
 
   const filtered = useMemo(() => {
     const terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -77,7 +77,7 @@ function KeysPage() {
   };
 
   const appNames = (keyId: string) =>
-    links.filter((l) => l.key_id === keyId).map((l) => apps.find((a) => a.id === l.app_id)?.name).filter(Boolean) as string[];
+    links.filter((l) => l.key_id === keyId).map((l) => apps.find((a) => a.id === l.app_id)?.name).filter((p): p is string => Boolean(p));
 
   if (!isList) return <Outlet />;
 
