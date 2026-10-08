@@ -4,7 +4,7 @@ import { ArrowLeft, Pencil, Trash2, Plus, ExternalLink, Star } from 'lucide-reac
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { useApps, useKeys, useSkills, useOutputs, useKeyLinks, useSkillLinks, usePrefs, useMutate } from '../../lib/queries';
@@ -208,7 +208,10 @@ function AppDetail() {
 
       <Dialog open={consumeOpen} onOpenChange={setConsumeOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>自定义扣减</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>自定义扣减</DialogTitle>
+            <DialogDescription className="sr-only">输入你想扣减的额度</DialogDescription>
+          </DialogHeader>
           <Input placeholder="扣减数量" inputMode="decimal" value={consumeAmt} onChange={(e) => setConsumeAmt(e.target.value)} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setConsumeOpen(false)}>取消</Button>
@@ -244,7 +247,10 @@ function AppDetail() {
 
       <Dialog open={outOpen} onOpenChange={setOutOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>添加产物</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>添加产物</DialogTitle>
+            <DialogDescription className="sr-only">记录当前应用的产物信息</DialogDescription>
+          </DialogHeader>
           <div className="space-y-3">
             <Input placeholder="产物名称" value={outTitle} onChange={(e) => setOutTitle(e.target.value)} />
             <Select value={outKind} onValueChange={setOutKind}>

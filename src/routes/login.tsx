@@ -107,6 +107,7 @@ function LoginPage() {
                 key={m}
                 role="tab"
                 aria-selected={mode === m}
+                tabIndex={mode === m ? 0 : -1}
                 onClick={() => switchMode(m)}
                 className={`pb-3 pr-8 text-[16px] font-semibold transition-colors relative ${
                   mode === m ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -139,6 +140,7 @@ function LoginPage() {
                   autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                   value={password} onChange={(e) => setPassword(e.target.value)} className="pr-10 h-11 rounded-lg" />
                 <button type="button" aria-label={showPwd ? '隐藏密码' : '显示密码'}
+                  aria-pressed={showPwd}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPwd(!showPwd)}>
                   {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
