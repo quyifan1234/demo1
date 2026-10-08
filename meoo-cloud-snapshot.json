@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "collectedAt": "2026-10-08T09:59:36.416Z",
+  "hasDatabase": true,
+  "edgeFunctions": [
+    {
+      "slug": "wx-mp-login",
+      "name": "wx-mp-login",
+      "verifyJwt": false
+    },
+    {
+      "slug": "verify-invite",
+      "name": "verify-invite",
+      "verifyJwt": false
+    }
+  ],
+  "secretNames": [
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_DB_URL",
+    "SUPABASE_URL",
+    "SUPABASE_PUBLIC_URL",
+    "MEOO_PROJECT_API_KEY_rtrxxey29u3j",
+    "MEOO_PROJECT_API_KEY",
+    "WX_APP_ID",
+    "WX_APP_SECRET",
+    "MEOO_PROJECT_API_KEY_amshosva936j",
+    "INVITE_CODE",
+    "MEOO_PROJECT_API_KEY_wgh68uu2zihu"
+  ],
+  "storageBuckets": [
+    {
+      "id": "02f6e886-d77e-448b-b6cf-7dedbe80be22",
+      "name": "ai-assets",
+      "public": true
+    }
+  ]
+}
