@@ -52,7 +52,7 @@ function AssetDetail() {
       </div>
       <div className="flex flex-wrap items-center gap-2 mb-10">
         {asset.url ? (
-          <a href={asset.url} target="_blank" rel="noreferrer"
+          <a href={(asset.url || "").startsWith("javascript:") ? "#" : asset.url} target="_blank" rel="noopener noreferrer"
             className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-[15px] font-semibold text-primary-foreground">
             <ExternalLink size={16} />打开链接
           </a>
@@ -78,7 +78,7 @@ function AssetDetail() {
           </div>
         )}
         {asset.url ? (
-          <a href={asset.url} target="_blank" rel="noreferrer"
+          <a href={(asset.url || "").startsWith("javascript:") ? "#" : asset.url} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-primary hover:underline break-all text-[15px]">
             <ExternalLink size={16} className="shrink-0" />
             {asset.url}
