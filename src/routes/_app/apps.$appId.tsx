@@ -96,7 +96,7 @@ function AppDetail() {
       </div>
       <div className="flex flex-wrap items-center gap-2 mb-10">
         {app.url ? (
-          <a href={app.url} target="_blank" rel="noreferrer"
+          <a href={(app.url || "").startsWith("javascript:") ? "#" : app.url} target="_blank" rel="noopener noreferrer"
             className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-[15px] font-semibold text-primary-foreground">
             <ExternalLink size={16} />打开
           </a>
@@ -123,7 +123,7 @@ function AppDetail() {
                 <span className="min-w-0 truncate text-muted-foreground" title={app.url}>
                   {app.url.replace(/^https?:\/\//, '')}
                 </span>
-                <a href={app.url} target="_blank" rel="noreferrer" title="在新标签页打开"
+                <a href={(app.url || "").startsWith("javascript:") ? "#" : app.url} target="_blank" rel="noopener noreferrer" title="在新标签页打开"
                   aria-label="在新标签页打开"
                   className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground shrink-0">
                   <ExternalLink size={14} />
@@ -165,7 +165,7 @@ function AppDetail() {
                   </RowAction>
                 </div>
                 {o.content ? <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">{o.content}</p> : null}
-                {o.asset_url ? <a href={o.asset_url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline mt-1 inline-block">查看附件</a> : null}
+                {o.asset_url ? <a href={(o.asset_url || "").startsWith("javascript:") ? "#" : o.asset_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline mt-1 inline-block">查看附件</a> : null}
               </div>
             ))}
           </RowList>
