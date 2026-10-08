@@ -94,7 +94,7 @@ function AppShell() {
         <div className="p-4 border-t border-border">
           <button
             onClick={onSignOut}
-            className="flex items-center gap-3 px-4 py-2 text-[15px] text-muted-foreground hover:text-foreground w-full"
+            className="flex items-center gap-3 px-4 py-2 text-[15px] text-muted-foreground hover:text-foreground w-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm"
           >
             <LogOut size={17} strokeWidth={1.8} />
             退出登录

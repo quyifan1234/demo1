@@ -76,7 +76,7 @@ function AppDetail() {
 
   return (
     <div>
-      <button onClick={() => navigate({ to: '/apps' })} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
+      <button onClick={() => navigate({ to: '/apps' })} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm">
         <ArrowLeft size={15} />返回应用列表
       </button>
 
@@ -97,7 +97,7 @@ function AppDetail() {
       <div className="flex flex-wrap items-center gap-2 mb-10">
         {app.url ? (
           <a href={app.url} target="_blank" rel="noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-[15px] font-semibold text-primary-foreground">
+            className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-[15px] font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
             <ExternalLink size={16} />打开
           </a>
         ) : null}
@@ -125,7 +125,7 @@ function AppDetail() {
                 </span>
                 <a href={app.url} target="_blank" rel="noreferrer" title="在新标签页打开"
                   aria-label="在新标签页打开"
-                  className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground shrink-0">
+                  className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                   <ExternalLink size={14} />
                 </a>
               </div>
@@ -165,7 +165,7 @@ function AppDetail() {
                   </RowAction>
                 </div>
                 {o.content ? <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">{o.content}</p> : null}
-                {o.asset_url ? <a href={o.asset_url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline mt-1 inline-block">查看附件</a> : null}
+                {o.asset_url ? <a href={o.asset_url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline mt-1 inline-block focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm">查看附件</a> : null}
               </div>
             ))}
           </RowList>

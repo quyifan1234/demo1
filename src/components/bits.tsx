@@ -45,7 +45,7 @@ export function QuotaBar({ remaining, total, thresholdPct = 20, unit = '次' }: 
 export function EmptyState({ title, desc, action }: { title: string; desc?: string; action?: React.ReactNode }) {
   // Apple Music v2 空状态：大字标题 + 一句次文字 + 红色文字按钮，不用插画
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+    <div className="flex flex-col items-center justify-center py-16 px-8 text-center" role="status" aria-live="polite">
       <p className="text-xl font-bold">{title}</p>
       {desc ? <p className="text-sm text-muted-foreground mt-2 max-w-sm">{desc}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
@@ -154,7 +154,7 @@ export function DetailSkeleton() {
  */
 export function QueryError({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-8 text-center" role="alert">
+    <div className="flex flex-col items-center justify-center py-16 px-8 text-center" role="alert" aria-live="assertive">
       <p className="text-base font-semibold">加载失败</p>
       <p className="text-sm text-muted-foreground mt-2 max-w-sm">{message ?? '网络开小差了，请稍后重试'}</p>
       {onRetry ? (
