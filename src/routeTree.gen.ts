@@ -44,27 +44,27 @@ const AppAppsRoute = AppAppsRouteImport.update({
   id: '/apps',
   path: '/apps',
   getParentRoute: () => AppRoute,
-} as any)
+} as any).lazy(() => import('./routes/_app/apps.lazy').then((d) => d.Route))
 const AppAssetsRoute = AppAssetsRouteImport.update({
   id: '/assets',
   path: '/assets',
   getParentRoute: () => AppRoute,
-} as any)
+} as any).lazy(() => import('./routes/_app/assets.lazy').then((d) => d.Route))
 const AppKeysRoute = AppKeysRouteImport.update({
   id: '/keys',
   path: '/keys',
   getParentRoute: () => AppRoute,
-} as any)
+} as any).lazy(() => import('./routes/_app/keys.lazy').then((d) => d.Route))
 const AppMineRoute = AppMineRouteImport.update({
   id: '/mine',
   path: '/mine',
   getParentRoute: () => AppRoute,
-} as any)
+} as any).lazy(() => import('./routes/_app/mine.lazy').then((d) => d.Route))
 const AppSkillsRoute = AppSkillsRouteImport.update({
   id: '/skills',
   path: '/skills',
   getParentRoute: () => AppRoute,
-} as any)
+} as any).lazy(() => import('./routes/_app/skills.lazy').then((d) => d.Route))
 const AppAppsAppIdRoute = AppAppsAppIdRouteImport.update({
   id: '/$appId',
   path: '/$appId',
