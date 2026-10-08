@@ -18,7 +18,7 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur md:px-6">
-      <div className="flex items-center gap-2 text-sm font-medium md:hidden">
+      <div className="flex items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring gap-2 text-sm font-medium md:hidden">
         <UserCircle2 size={16} className="text-muted-foreground" />
         <span className="truncate">{username}</span>
       </div>
@@ -28,7 +28,7 @@ export function TopBar() {
       </div>
       <button
         onClick={handleSignOut}
-        className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        className="flex items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
       >
         <LogOut size={14} />
         退出

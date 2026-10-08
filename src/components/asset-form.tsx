@@ -79,13 +79,13 @@ export function AssetForm({ initial, onSubmit, busy, submitLabel }: {
           <div className="flex gap-2 flex-wrap mt-2">
             {v.tags.map((t) => (
               <Badge key={t} variant="secondary" className="gap-1">{t}
-                <button onClick={() => set('tags', v.tags.filter((x) => x !== t))}><X size={12} /></button>
+                <button className="focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded" onClick={() => set('tags', v.tags.filter((x) => x !== t))}><X size={12} /></button>
               </Badge>
             ))}
           </div>
         )}
       </div>
-      <button type="button" onClick={() => set('is_favorite', !v.is_favorite)}
+      <button type="button" aria-pressed={v.is_favorite} onClick={() => set('is_favorite', !v.is_favorite)}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <Star size={16} className={v.is_favorite ? 'text-primary' : ''} fill={v.is_favorite ? 'currentColor' : 'none'} />
         {v.is_favorite ? '已收藏' : '收藏'}

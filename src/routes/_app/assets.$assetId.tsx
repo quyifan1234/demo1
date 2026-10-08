@@ -35,7 +35,7 @@ function AssetDetail() {
   return (
     <div>
       <button onClick={() => navigate({ to: '/assets' })}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm">
         <ArrowLeft size={15} />返回素材库
       </button>
 
@@ -53,7 +53,7 @@ function AssetDetail() {
       <div className="flex flex-wrap items-center gap-2 mb-10">
         {asset.url ? (
           <a href={asset.url} target="_blank" rel="noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-[15px] font-semibold text-primary-foreground">
+            className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-6 text-[15px] font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
             <ExternalLink size={16} />打开链接
           </a>
         ) : null}
@@ -79,7 +79,7 @@ function AssetDetail() {
         )}
         {asset.url ? (
           <a href={asset.url} target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-2 text-primary hover:underline break-all text-[15px]">
+            className="inline-flex items-center gap-2 text-primary hover:underline break-all text-[15px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm">
             <ExternalLink size={16} className="shrink-0" />
             {asset.url}
           </a>

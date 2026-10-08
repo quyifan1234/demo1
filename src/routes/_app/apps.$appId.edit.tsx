@@ -74,7 +74,7 @@ function EditApp() {
               {keys.length === 0 ? <span className="text-sm text-muted-foreground">还没有密钥</span> :
                 keys.map((k) => (
                   <button key={k.id} onClick={() => toggle(curKeys, setSelKeys, k.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm border ${curKeys.includes(k.id) ? 'bg-primary/10 text-primary border-primary/30 font-medium' : 'bg-muted text-muted-foreground border-transparent'}`}>
+                    className={`focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring px-3 py-1.5 rounded-full text-sm border ${curKeys.includes(k.id) ? 'bg-primary/10 text-primary border-primary/30 font-medium' : 'bg-muted text-muted-foreground border-transparent'}`}>
                     {k.name}
                   </button>
                 ))}
@@ -86,7 +86,7 @@ function EditApp() {
               {skills.length === 0 ? <span className="text-sm text-muted-foreground">还没有技能</span> :
                 skills.map((s) => (
                   <button key={s.id} onClick={() => toggle(curSkills, setSelSkills, s.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm border ${curSkills.includes(s.id) ? 'bg-primary/10 text-primary border-primary/30 font-medium' : 'bg-muted text-muted-foreground border-transparent'}`}>
+                    className={`focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring px-3 py-1.5 rounded-full text-sm border ${curSkills.includes(s.id) ? 'bg-primary/10 text-primary border-primary/30 font-medium' : 'bg-muted text-muted-foreground border-transparent'}`}>
                     {s.name}
                   </button>
                 ))}
