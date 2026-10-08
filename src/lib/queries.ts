@@ -55,18 +55,20 @@ export function useMutate() {
       if (opts?.optimistic) {
         keys.forEach((k) => qc.setQueryData(k, (old: any) => (Array.isArray(old) ? opts.optimistic!(old) : old)));
       }
-      const { error } = opts?.isNew || !row[keyCol]
-        ? await supabase.from(table).insert(payload)
-        : await supabase.from(table).update(payload).eq(keyCol, row[keyCol] as string);
+      const { error, data } = opts?.isNew || !row[keyCol]
+        ? await supabase.from(table).insert(payload).select()
+        : await supabase.from(table).update(payload).eq(keyCol, String(row[keyCol])).select();
       if (error) throw new Error(error.message);
+      if (!data || data.length === 0) throw new Error('操作失败，可能无权限或记录不存在');
       invalidate(keys);
     },
     remove: async (table: string, id: string, keys: string[][], opts?: { optimistic?: (old: any[]) => any[] }) => {
       if (opts?.optimistic) {
         keys.forEach((k) => qc.setQueryData(k, (old: any) => (Array.isArray(old) ? opts.optimistic!(old) : old)));
       }
-      const { error } = await supabase.from(table).delete().eq('id', id);
+      const { error, data } = await supabase.from(table).delete().eq('id', id).select();
       if (error) throw new Error(error.message);
+      if (!data || data.length === 0) throw new Error('操作失败，可能无权限或记录不存在');
       invalidate(keys);
     },
   };

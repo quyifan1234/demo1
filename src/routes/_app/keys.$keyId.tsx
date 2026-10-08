@@ -93,7 +93,7 @@ function KeyDetail() {
           <div className="space-y-2">
             <Label>所属平台</Label>
             <Input value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="如 OpenAI" list="platforms" />
-            <datalist id="platforms">{Array.from(new Set(keys.map((k) => k.platform).filter(Boolean))).map((p) => <option key={p as string} value={p as string} />)}</datalist>
+            <datalist id="platforms">{Array.from(new Set(keys.map((k) => k.platform).filter((p): p is string => Boolean(p)))).map((p) => <option key={p} value={p} />)}</datalist>
           </div>
         </div>
         <div className="space-y-2">
