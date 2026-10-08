@@ -55,6 +55,12 @@ export default defineConfig(({ mode, command }) => {
           entryFileNames: "assets/[name]-[hash].js",
           chunkFileNames: "assets/[name]-[hash].js",
           assetFileNames: "assets/[name]-[hash][extname]",
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            router: ['@tanstack/react-router'],
+            supabase: ['@supabase/supabase-js'],
+            lucide: ['lucide-react'],
+          },
         },
       },
     },
