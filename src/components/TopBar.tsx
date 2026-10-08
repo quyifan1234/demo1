@@ -28,9 +28,10 @@ export function TopBar() {
       </div>
       <button
         onClick={handleSignOut}
+        aria-label="退出"
         className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
       >
-        <LogOut size={14} />
+        <LogOut size={14} aria-hidden="true" />
         退出
       </button>
     </header>

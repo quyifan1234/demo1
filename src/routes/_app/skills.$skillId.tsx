@@ -144,7 +144,7 @@ function SkillDetail() {
                 <div className="flex gap-2 flex-wrap mt-2">
                   {tags.map((t) => (
                     <Badge key={t} variant="secondary" className="gap-1 rounded-full">{t}
-                      <button onClick={() => setTags(tags.filter((x) => x !== t))}><X size={12} /></button>
+                      <button aria-label={`移除 ${t}`} onClick={() => setTags(tags.filter((x) => x !== t))}><X size={12} /></button>
                     </Badge>
                   ))}
                 </div>
@@ -156,6 +156,7 @@ function SkillDetail() {
                 {apps.length === 0 ? <span className="text-sm text-muted-foreground">还没有应用</span> :
                   apps.map((a) => (
                     <button key={a.id} onClick={() => setSelApps(curApps.includes(a.id) ? curApps.filter((x) => x !== a.id) : [...curApps, a.id])}
+                      aria-pressed={curApps.includes(a.id)}
                       className={`px-3 py-1.5 rounded-full text-sm border ${curApps.includes(a.id) ? 'bg-primary/10 text-primary border-primary/30 font-medium' : 'bg-muted text-muted-foreground border-transparent'}`}>
                       {a.name}
                     </button>
