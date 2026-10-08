@@ -79,7 +79,13 @@ export function AssetForm({ initial, onSubmit, busy, submitLabel }: {
           <div className="flex gap-2 flex-wrap mt-2">
             {v.tags.map((t) => (
               <Badge key={t} variant="secondary" className="gap-1">{t}
-                <button onClick={() => set('tags', v.tags.filter((x) => x !== t))}><X size={12} /></button>
+                <button
+                  type="button"
+                  aria-label={`删除标签 ${t}`}
+                  onClick={() => set('tags', v.tags.filter((x) => x !== t))}
+                >
+                  <X size={12} />
+                </button>
               </Badge>
             ))}
           </div>
