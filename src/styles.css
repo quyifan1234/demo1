@@ -1,0 +1,206 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * SI装备库 v2 — Apple Music 式简约（2026-10-08 用户拍板，废除 v1 纸墨轻量）
+ * 真源：~/workspace/meoo/design-tokens-v2.md
+ * 所有颜色走 --am-* CSS 变量；组件里禁止出现色值字面量。
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warn: var(--warn);
+  --color-warn-foreground: var(--warn-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  /* ——— Apple Music v2 tokens（浅色，唯一真源） ——— */
+  --am-bg: #FFFFFF;
+  --am-grouped-bg: #F2F2F7;
+  --am-text: #000000;
+  --am-secondary: #8E8E93;
+  --am-separator: #E5E5EA;
+  --am-red: #FA243C;
+  --am-green: #34C759;
+  --am-orange: #FF9500;
+  --am-danger: #FF3B30;
+  --am-cover-text: #FFFFFF;
+  --am-radius-cover: 8px;
+  --am-radius-btn: 999px;
+
+  /* 12 个纯色封面：按名称 hash 取其一，禁止渐变 */
+  --am-cover-1: #FF9F0A;
+  --am-cover-2: #FF6482;
+  --am-cover-3: #BF5AF2;
+  --am-cover-4: #0A84FF;
+  --am-cover-5: #64D2FF;
+  --am-cover-6: #30D158;
+  --am-cover-7: #FFD60A;
+  --am-cover-8: #FF453A;
+  --am-cover-9: #5E5CE6;
+  --am-cover-10: #AC8E68;
+  --am-cover-11: #6E6E73;
+  --am-cover-12: #00C7BE;
+
+  /* ——— shadcn 语义映射（全部指向 --am-*，无字面量） ——— */
+  --radius: 0.5rem;
+  --background: var(--am-bg);
+  --foreground: var(--am-text);
+  --card: var(--am-bg);
+  --card-foreground: var(--am-text);
+  --popover: var(--am-bg);
+  --popover-foreground: var(--am-text);
+  --primary: var(--am-red);
+  --primary-foreground: var(--am-cover-text);
+  --secondary: var(--am-grouped-bg);
+  --secondary-foreground: var(--am-text);
+  --muted: var(--am-grouped-bg);
+  --muted-foreground: var(--am-secondary);
+  --accent: var(--am-grouped-bg);
+  --accent-foreground: var(--am-text);
+  --destructive: var(--am-danger);
+  --destructive-foreground: var(--am-cover-text);
+  --warn: var(--am-orange);
+  --warn-foreground: var(--am-cover-text);
+  --border: var(--am-separator);
+  --input: var(--am-separator);
+  --ring: var(--am-red);
+  --chart-1: var(--am-red);
+  --chart-2: var(--am-orange);
+  --chart-3: var(--am-green);
+  --chart-4: var(--am-secondary);
+  --chart-5: var(--am-danger);
+  --sidebar: var(--am-bg);
+  --sidebar-foreground: var(--am-text);
+  --sidebar-primary: var(--am-red);
+  --sidebar-primary-foreground: var(--am-cover-text);
+  --sidebar-accent: var(--am-grouped-bg);
+  --sidebar-accent-foreground: var(--am-text);
+  --sidebar-border: var(--am-separator);
+  --sidebar-ring: var(--am-red);
+}
+
+/* 深色预留（token 表 dark 列），暂不启用 */
+.dark {
+  --am-bg: #000000;
+  --am-grouped-bg: #1C1C1E;
+  --am-text: #FFFFFF;
+  --am-secondary: #98989D;
+  --am-separator: #38383A;
+  --am-red: #FA243C;
+  --am-green: #30D158;
+  --am-orange: #FF9F0A;
+  --am-danger: #FF453A;
+  --am-cover-text: #FFFFFF;
+  --background: var(--am-bg);
+  --foreground: var(--am-text);
+  --card: var(--am-bg);
+  --card-foreground: var(--am-text);
+  --popover: var(--am-bg);
+  --popover-foreground: var(--am-text);
+  --primary: var(--am-red);
+  --primary-foreground: var(--am-cover-text);
+  --secondary: var(--am-grouped-bg);
+  --secondary-foreground: var(--am-text);
+  --muted: var(--am-grouped-bg);
+  --muted-foreground: var(--am-secondary);
+  --accent: var(--am-grouped-bg);
+  --accent-foreground: var(--am-text);
+  --destructive: var(--am-danger);
+  --destructive-foreground: var(--am-cover-text);
+  --border: var(--am-separator);
+  --input: var(--am-separator);
+  --ring: var(--am-red);
+  --sidebar: var(--am-bg);
+  --sidebar-foreground: var(--am-text);
+  --sidebar-primary: var(--am-red);
+  --sidebar-primary-foreground: var(--am-cover-text);
+  --sidebar-accent: var(--am-grouped-bg);
+  --sidebar-accent-foreground: var(--am-text);
+  --sidebar-border: var(--am-separator);
+  --sidebar-ring: var(--am-red);
+}
+
+/* ——— 封面：纯色块 + 首字，无渐变、无阴影 ——— */
+.am-cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--am-radius-cover);
+  color: var(--am-cover-text);
+  font-weight: 700;
+  user-select: none;
+}
+.am-cover-1 { background-color: var(--am-cover-1); }
+.am-cover-2 { background-color: var(--am-cover-2); }
+.am-cover-3 { background-color: var(--am-cover-3); }
+.am-cover-4 { background-color: var(--am-cover-4); }
+.am-cover-5 { background-color: var(--am-cover-5); }
+.am-cover-6 { background-color: var(--am-cover-6); }
+.am-cover-7 { background-color: var(--am-cover-7); }
+.am-cover-8 { background-color: var(--am-cover-8); }
+.am-cover-9 { background-color: var(--am-cover-9); }
+.am-cover-10 { background-color: var(--am-cover-10); }
+.am-cover-11 { background-color: var(--am-cover-11); }
+.am-cover-12 { background-color: var(--am-cover-12); }
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+      "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
