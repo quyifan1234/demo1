@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from './supabase';
 import type { AiApp, ApiKey, AppKeyLink, AppOutput, Profile, Skill, SkillAppLink, UserPrefs, Asset } from './types';
 
@@ -42,12 +43,33 @@ export function useProfile() {
   });
 }
 
+interface SaveOptions {
+  isNew?: boolean;
+  keyCol?: string;
+  skipUserId?: boolean;
+  optimistic?: (old: any[]) => any[];
+  /** 成功后的 toast 文案；不传则不提示 */
+  success?: string;
+  /** 失败时的兜底文案（数据库错误信息优先） */
+  errorMessage?: string;
+}
+
+function failToast(error: unknown, fallback: string) {
+  const message = error instanceof Error && error.message ? error.message : fallback;
+  toast.error(message);
+}
+
+/**
+ * 统一的写操作入口：内置「乐观更新 → 写库 → 失败回滚并提示」链路。
+ * save / remove 一律返回 boolean：调用方用返回值决定是否导航/关弹窗，
+ * 不再各自 try/catch，也不会出现「点了没反应」的静默失败。
+ */
 export function useMutate() {
   const qc = useQueryClient();
   const invalidate = (keys: string[][]) => keys.forEach((k) => qc.invalidateQueries({ queryKey: k }));
   return {
     invalidate,
-    save: async (table: string, row: Record<string, unknown>, keys: string[][], opts?: { isNew?: boolean; keyCol?: string; skipUserId?: boolean; optimistic?: (old: any[]) => any[] }) => {
+    save: async (table: string, row: Record<string, unknown>, keys: string[][], opts?: SaveOptions): Promise<boolean> => {
       const userId = await uid();
       const keyCol = opts?.keyCol ?? 'id';
       const payload = { ...row, ...(opts?.skipUserId ? {} : { user_id: userId }), updated_at: new Date().toISOString() };
@@ -55,27 +77,49 @@ export function useMutate() {
       if (opts?.optimistic) {
         keys.forEach((k) => qc.setQueryData(k, (old: any) => (Array.isArray(old) ? opts.optimistic!(old) : old)));
       }
-      const { error } = opts?.isNew || !row[keyCol]
-        ? await supabase.from(table).insert(payload)
-        : await supabase.from(table).update(payload).eq(keyCol, row[keyCol] as string);
-      if (error) throw new Error(error.message);
+      try {
+        const { error } = opts?.isNew || !row[keyCol]
+          ? await supabase.from(table).insert(payload)
+          : await supabase.from(table).update(payload).eq(keyCol, row[keyCol] as string);
+        if (error) throw new Error(error.message);
+      } catch (e) {
+        invalidate(keys); // 回滚乐观更新，界面回到服务端真实状态
+        failToast(e, opts?.errorMessage ?? '保存失败，请稍后重试');
+        return false;
+      }
       invalidate(keys);
+      if (opts?.success) toast.success(opts.success);
+      return true;
     },
-    remove: async (table: string, id: string, keys: string[][], opts?: { optimistic?: (old: any[]) => any[] }) => {
+    remove: async (table: string, id: string, keys: string[][], opts?: { optimistic?: (old: any[]) => any[]; success?: string; errorMessage?: string }): Promise<boolean> => {
       if (opts?.optimistic) {
         keys.forEach((k) => qc.setQueryData(k, (old: any) => (Array.isArray(old) ? opts.optimistic!(old) : old)));
       }
-      const { error } = await supabase.from(table).delete().eq('id', id);
-      if (error) throw new Error(error.message);
+      try {
+        const { error } = await supabase.from(table).delete().eq('id', id);
+        if (error) throw new Error(error.message);
+      } catch (e) {
+        invalidate(keys);
+        failToast(e, opts?.errorMessage ?? '删除失败，请稍后重试');
+        return false;
+      }
       invalidate(keys);
+      if (opts?.success) toast.success(opts.success);
+      return true;
     },
   };
 }
 
 export async function replaceLinks(table: 'app_key_links' | 'skill_app_links', col: 'key_id' | 'skill_id', appId: string, ids: string[]) {
-  const userId = await uid();
-  await supabase.from(table).delete().eq('app_id', appId);
-  if (ids.length === 0) return;
-  const { error } = await supabase.from(table).insert(ids.map((id) => ({ user_id: userId, app_id: appId, [col]: id })));
-  if (error) throw new Error(error.message);
+  try {
+    const userId = await uid();
+    await supabase.from(table).delete().eq('app_id', appId);
+    if (ids.length === 0) return true;
+    const { error } = await supabase.from(table).insert(ids.map((id) => ({ user_id: userId, app_id: appId, [col]: id })));
+    if (error) throw new Error(error.message);
+    return true;
+  } catch (e) {
+    failToast(e, '关联关系保存失败，请稍后重试');
+    return false;
+  }
 }

@@ -6,6 +6,27 @@
     <title>SI 装备库 · 个人 AI 资源工作台</title>
     <meta name="description" content="集中管理 AI 应用、素材、技能与密钥。让每一件装备有序归档、随时可用。" />
     <meta name="theme-color" content="#f4f4f7" />
+    <script>
+      /* 首屏前应用已保存的主题：避免刷新时先浅色后变暗的闪烁。
+         与 src/components/theme-switch.tsx 的 STORAGE_KEY / THEMES 保持一致。 */
+      (function () {
+        var KEY = 'si-arsenal-theme';
+        var COLORS = { light: '#f4f4f7', dark: '#0f0e0c', editorial: '#fbfbfa' };
+        try {
+          var theme = localStorage.getItem(KEY);
+          if (!COLORS[theme]) theme = 'light';
+          var root = document.documentElement;
+          root.dataset.theme = theme;
+          root.classList.toggle('dark', theme === 'dark');
+          root.style.colorScheme = theme === 'dark' ? 'dark' : 'light';
+          root.style.backgroundColor = COLORS[theme];
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', COLORS[theme]);
+        } catch (e) {
+          /* 存储不可用时保持默认浅色 */
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <style>

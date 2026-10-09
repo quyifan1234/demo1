@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { LogOut } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -25,8 +25,10 @@ function MinePage() {
   const { data: keys = [] } = useKeys();
   const { data: skills = [] } = useSkills();
   const { data: assets = [] } = useAssets();
-  const { data: prefs } = usePrefs();
-  const { data: profile } = useProfile();
+  const profileQuery = useProfile();
+  const prefsQuery = usePrefs();
+  const profile = profileQuery.data;
+  const prefs = prefsQuery.data;
   const { save } = useMutate();
 
   const [nickname, setNickname] = useState(profile?.nickname ?? '');
@@ -36,14 +38,36 @@ function MinePage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 档案与偏好是异步到达的：两个查询都出结果后回填一次表单。
+  // 否则用户看到的是空昵称/空简介，一按保存就把已有资料覆盖成空（数据丢失）。
+  // 用户一旦开始输入（dirty）就不再回填，避免打字被覆盖。
+  const hydrated = useRef(false);
+  const dirty = useRef(false);
+  const settled = profileQuery.isFetched && prefsQuery.isFetched;
+  useEffect(() => {
+    if (!settled || hydrated.current || dirty.current) return;
+    hydrated.current = true;
+    setNickname(profile?.nickname ?? '');
+    setBio(profile?.bio ?? '');
+    setThreshold(String(prefs?.quota_threshold ?? 20));
+    setSort(prefs?.default_sort ?? 'updated');
+  }, [settled, profile, prefs]);
+
+  const editNickname = (value: string) => { dirty.current = true; setNickname(value); };
+  const editBio = (value: string) => { dirty.current = true; setBio(value); };
+  const editThreshold = (value: string) => { dirty.current = true; setThreshold(value); };
+  const editSort = (value: string) => { dirty.current = true; setSort(value); };
 
   const saveAll = async () => {
+    if (busy) return;
     setBusy(true);
     try {
-      await save('profiles', { id: user?.id, nickname: nickname.trim() || null, bio: bio.trim() || null },
-        [['profile']], { isNew: !profile, skipUserId: true });
-      await save('user_prefs', { user_id: user?.id, quota_threshold: Number(threshold) || 20, default_sort: sort },
-        [['prefs']], { isNew: !prefs, keyCol: 'user_id' });
+      // 两个写操作都返回 boolean：失败时 toast 已提示，这里只决定要不要显示「已保存」
+      const profileOk = await save('profiles', { id: user?.id, nickname: nickname.trim() || null, bio: bio.trim() || null },
+        [['profile']], { isNew: !profile, skipUserId: true, errorMessage: '个人资料保存失败，请稍后重试' });
+      const prefsOk = profileOk && await save('user_prefs', { user_id: user?.id, quota_threshold: Number(threshold) || 20, default_sort: sort },
+        [['prefs']], { isNew: !prefs, keyCol: 'user_id', errorMessage: '偏好设置保存失败，请稍后重试' });
+      if (!profileOk || !prefsOk) return;
       setSaved(true);
       if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
       savedTimeoutRef.current = setTimeout(() => {
@@ -91,31 +115,31 @@ function MinePage() {
       <div className="space-y-4 mb-10">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>昵称</Label>
-            <Input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="昵称" />
+            <Label htmlFor="profile-nickname">昵称</Label>
+            <Input id="profile-nickname" value={nickname} onChange={(e) => editNickname(e.target.value)} placeholder="昵称" />
           </div>
           <div className="space-y-2">
-            <Label>额度提醒阈值（%）</Label>
-            <Select value={threshold} onValueChange={setThreshold}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Label htmlFor="profile-threshold">额度提醒阈值（%）</Label>
+            <Select value={threshold} onValueChange={editThreshold}>
+              <SelectTrigger id="profile-threshold"><SelectValue /></SelectTrigger>
               <SelectContent>{['10', '20', '30'].map((t) => <SelectItem key={t} value={t}>{t}%</SelectItem>)}</SelectContent>
             </Select>
           </div>
         </div>
         <div className="space-y-2">
-          <Label>简介</Label>
-          <Textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="一句话介绍自己" rows={2} />
+          <Label htmlFor="profile-bio">简介</Label>
+          <Textarea id="profile-bio" value={bio} onChange={(e) => editBio(e.target.value)} placeholder="一句话介绍自己" rows={2} />
         </div>
         <div className="space-y-2">
-          <Label>应用列表默认排序</Label>
-          <Select value={sort} onValueChange={setSort}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+          <Label htmlFor="profile-sort">应用列表默认排序</Label>
+          <Select value={sort} onValueChange={editSort}>
+            <SelectTrigger id="profile-sort"><SelectValue /></SelectTrigger>
             <SelectContent>{SORTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div className="flex items-center gap-3">
           <Button disabled={busy} onClick={saveAll} className="rounded-full shadow-none">{busy ? '保存中…' : '保存设置'}</Button>
-          {saved ? <span className="text-sm text-primary">已保存</span> : null}
+          {saved ? <span role="status" className="text-sm text-primary">已保存</span> : null}
         </div>
       </div>
 
