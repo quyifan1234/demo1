@@ -64,6 +64,30 @@
 - Secrets 12 项：`SUPABASE_URL/ANON_KEY/SERVICE_ROLE_KEY/DB_URL/PUBLIC_URL`、`WX_APP_ID`、`WX_APP_SECRET`、`INVITE_CODE`、`MEOO_PROJECT_API_KEY(_rtrxxey29u3j/_amshosva936j/_wgh68uu2zihu)`
 - Storage bucket：`ai-assets`（public）
 
+## 同步执行记录（2026-10-09 05:33 UTC）
+
+已把 GitHub main 最新版推到 Meoo 并发布：
+
+| 步骤 | 命令 | 结果 |
+|---|---|---|
+| 干净检出 | `git worktree add /tmp/push-src main` | 3f306a1 |
+| 依赖安装 | `npm install`（pnpm 12 因代理证书报 UnknownIssuer，改用 npm） | 181 包 |
+| 校验 | `npm run build`（含 `tsc --noEmit`）+ `npx vitest run` | 构建成功；8 文件 / 34 用例全通过 |
+| 推送代码 | `meoo sandbox push --project wgh68uu2zihu` | 沙箱新提交 `4765a376`，54 文件变更，预览重启 |
+| 发布 | `meoo deploy --project wgh68uu2zihu --skip-push --skip-build` | **v21 active**，commit `3f306a10`，额度 1/75 |
+| 回拉校验 | `meoo sandbox pull` × 3 | 应用代码与 GitHub main **完全一致** |
+
+线上验证 `https://wgh68uu2zihu.meoo.run`：HTTP 200，`<title>SI 装备库 · 个人 AI 资源工作台</title>`、`data-theme="light"`、新 description，且产物含 `vendor-react / vendor-supabase / vendor-lucide / vendor` 分包 → 确认 v21 就是 GitHub main 的构建产物。
+
+回滚参考：v20（`fcfa02d8`）仍在发布历史中。
+
+### 注意事项
+
+1. **`sandbox push` 是整树替换**：推送后 `.plan/`、`.todo/`、`.websearch/`、`skills/` 会被删除，但平台随后自动重建（已实测 skills 恢复为 github-mcp / meoo-cloud / react-design）。推送前的沙箱备份在 `/tmp/meoo-backup`。
+2. **CLI 禁止上传 `.env`**（目录归档与单文件推送都会拦截），只会合成仅含白名单字段的 `.env`。当前沙箱 `.env` 只剩 `MEOO_PROJECT_URL_ID=wgh68uu2zihu`，原 `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` / `VITE_ONEDAY_APP_ID` 未回填。CDN 产物不受影响（构建发生在本地），若平台内编辑器预览异常，可在项目对话里让平台 agent 重新拉取云环境变量。
+3. **`.env` 被 git 跟踪且在公开仓库中**（`git ls-tree main .env` 命中）。建议 `git rm --cached .env` 后提交，并按需轮换其中泄露的值（当前含公开性质的 anon key 与项目 ID）。
+4. pnpm 在本沙箱不可用（TLS 拦截 + `NODE_EXTRA_CA_CERTS` 对 pnpm 12 无效），本地产物用 npm 构建；`meoo deploy` 内部调用 `pnpm run build`，因此本次发布用了 `--skip-build` 复用已验证的 `dist/`。
+
 ## 风险与建议
 
 1. **双向漂移**：GitHub 的三主题重构、ensureWritten、测试体系都没有回流 Meoo；平台上若继续改会再次分叉。建议确立单一真源（推荐以 GitHub 为源，`meoo sandbox push` / `meoo deploy` 同步）。
