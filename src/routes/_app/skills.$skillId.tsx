@@ -8,7 +8,7 @@ import { Textarea } from '../../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Badge } from '../../components/ui/badge';
 import { useSkills, useApps, useSkillLinks, useMutate, replaceLinks } from '../../lib/queries';
-import { SKILL_CATEGORIES } from '../../lib/types';
+import { SKILL_CATEGORIES, type Skill } from '../../lib/types';
 import { PageHeader, RequiredMark, DetailSkeleton, InitialAvatar, EmptyState } from '../../components/bits';
 import { X } from 'lucide-react';
 
@@ -68,9 +68,9 @@ function SkillDetail() {
       };
       const savedId = isNew ? crypto.randomUUID() : skillId;
       // 乐观更新：编辑场景先把新值写入缓存，切回详情视图即得新值，不闪现旧内容
-      await save('skills', isNew ? { ...row, id: savedId } : { ...skill, ...row }, [['skills']], {
+      await save<Skill>('skills', isNew ? { ...row, id: savedId } : { ...skill, ...row }, [['skills']], {
         isNew,
-        optimistic: (old) => old.map((s: any) => (s.id === skillId ? { ...s, ...row } : s)),
+        optimistic: (old) => old.map((s: Skill) => (s.id === skillId ? { ...s, ...row } : s)),
       });
       await replaceLinks('skill_app_links', 'skill_id', savedId, curApps);
       invalidate([['skillLinks']]);

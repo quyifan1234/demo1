@@ -12,6 +12,8 @@ pnpm dev
 
 开发服务器端口：**3015**（`http://localhost:3015`）
 
+> **注意**：提交代码前，请务必运行 `pnpm run typecheck` 以确保所有的 TypeScript 类型检查通过，并消除宽松的 `any` 或 `unknown` 断言。
+
 ## 开发约束
 
 - **技术栈**：react + vite，不要更换框架或构建工具（如切换为 Angular / Svelte），否则导入时会被拒绝
@@ -21,7 +23,7 @@ pnpm dev
 
 ### 数据库
 
-- `src/supabase/client.ts` — Supabase 客户端配置，**不要删除或重命名此文件**（平台靠它检测云服务状态）
+- `src/lib/supabase.ts` — Supabase 客户端配置，**不要删除或重命名此文件**（平台靠它检测云服务状态）
 - 修改数据库结构时，在 `migrations/` 目录下**新增** `.sql` 文件，不要修改或删除已有的 migration 文件
 - 命名格式：`YYYYMMDD_HHmmss_name.sql`，name 为纯小写 snake_case（如 `20260605_120000_add_orders_table.sql`）
 - 平台按文件名字典序执行，时间戳前缀保证顺序

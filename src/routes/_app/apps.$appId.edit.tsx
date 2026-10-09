@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Label } from '../../components/ui/label';
 import { useApps, useKeys, useSkills, useKeyLinks, useSkillLinks, useMutate, replaceLinks } from '../../lib/queries';
 import { PageHeader, DetailSkeleton } from '../../components/bits';
+import type { AiApp } from '../../lib/types';
 import { AppForm, toFormValue, type AppFormValue } from '../../components/app-form';
 
 export const Route = createFileRoute('/_app/apps/$appId/edit')({
@@ -45,8 +46,8 @@ function EditApp() {
         status: v.status, rating: v.rating, note: v.note.trim() || null,
       };
       // 乐观更新：保存前先把新值写入缓存，详情页挂载即得新值，不闪现旧标题
-      await save('ai_apps', { ...app, ...patch }, [['apps']], {
-        optimistic: (old) => old.map((a: any) => (a.id === appId ? { ...a, ...patch } : a)),
+      await save<AiApp>('ai_apps', { ...app, ...patch }, [['apps']], {
+        optimistic: (old) => old.map((a: AiApp) => (a.id === appId ? { ...a, ...patch } : a)),
       });
       await replaceLinks('app_key_links', 'key_id', appId, curKeys);
       await replaceLinks('skill_app_links', 'skill_id', appId, curSkills);

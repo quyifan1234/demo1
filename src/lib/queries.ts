@@ -47,23 +47,32 @@ export function useMutate() {
   const invalidate = (keys: string[][]) => keys.forEach((k) => qc.invalidateQueries({ queryKey: k }));
   return {
     invalidate,
-    save: async (table: string, row: Record<string, unknown>, keys: string[][], opts?: { isNew?: boolean; keyCol?: string; skipUserId?: boolean; optimistic?: (old: any[]) => any[] }) => {
+    /**
+     * 保存数据到 Supabase，支持乐观更新（Optimistic UI）
+     * 乐观更新通过直接修改 react-query 的本地缓存来实现界面即时响应，
+     * 而无需等待网络请求返回。如果请求失败，react-query 会自动处理（但在目前的简单实现中发生错误会抛出异常，通常由外层捕获并回滚或提示）
+     */
+    save: async <T extends { id?: string } = any>(table: string, row: Partial<T> & Record<string, unknown>, keys: string[][], opts?: { isNew?: boolean; keyCol?: string; skipUserId?: boolean; optimistic?: (old: T[]) => T[] }) => {
       const userId = await uid();
       const keyCol = opts?.keyCol ?? 'id';
       const payload = { ...row, ...(opts?.skipUserId ? {} : { user_id: userId }), updated_at: new Date().toISOString() };
       // 乐观更新：先改本地缓存，界面立即响应
       if (opts?.optimistic) {
-        keys.forEach((k) => qc.setQueryData(k, (old: any) => (Array.isArray(old) ? opts.optimistic!(old) : old)));
+        keys.forEach((k) => qc.setQueryData(k, (old: T[] | undefined) => (Array.isArray(old) ? opts.optimistic!(old) : old)));
       }
-      const { error } = opts?.isNew || !row[keyCol]
+      const { error } = opts?.isNew || !row[keyCol as keyof typeof row]
         ? await supabase.from(table).insert(payload)
-        : await supabase.from(table).update(payload).eq(keyCol, row[keyCol] as string);
+        : await supabase.from(table).update(payload).eq(keyCol, row[keyCol as keyof typeof row] as string);
       if (error) throw new Error(error.message);
       invalidate(keys);
     },
-    remove: async (table: string, id: string, keys: string[][], opts?: { optimistic?: (old: any[]) => any[] }) => {
+    /**
+     * 从 Supabase 删除数据，并支持乐观更新
+     * 在调用实际的删除 API 前，先从缓存中过滤掉目标项，使用户感觉操作已瞬间完成。
+     */
+    remove: async <T = any>(table: string, id: string, keys: string[][], opts?: { optimistic?: (old: T[]) => T[] }) => {
       if (opts?.optimistic) {
-        keys.forEach((k) => qc.setQueryData(k, (old: any) => (Array.isArray(old) ? opts.optimistic!(old) : old)));
+        keys.forEach((k) => qc.setQueryData(k, (old: T[] | undefined) => (Array.isArray(old) ? opts.optimistic!(old) : old)));
       }
       const { error } = await supabase.from(table).delete().eq('id', id);
       if (error) throw new Error(error.message);
