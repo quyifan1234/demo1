@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { ChevronRight, FolderOpen, KeyRound, Layers, Plus, Sparkles } from 'lucide-react';
 import { ALL_NAV, isNavActive } from './libraryNav';
+import { isPreviewDemoEnabled } from '../lib/preview-demo';
 import { ThemeSwitch } from './theme-switch';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
@@ -17,6 +18,7 @@ export function TopBar() {
         <span>{pathname === '/' ? '资料库' : current?.label ?? '资料库'}</span>
       </nav>
       <div className="toolbar-actions">
+        {isPreviewDemoEnabled() && <span className="demo-badge" role="status">演示模式 · 示例数据</span>}
         <ThemeSwitch />
         <DropdownMenu>
           <DropdownMenuTrigger asChild><Button><Plus data-icon="inline-start" /><span>新增装备</span></Button></DropdownMenuTrigger>

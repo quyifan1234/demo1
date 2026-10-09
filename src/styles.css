@@ -339,7 +339,7 @@
 .login-points li > span { padding-top: 3px; color: var(--primary); font-size: 10px; font-variant-numeric: tabular-nums; }
 .login-points li strong { font-size: 13px; font-weight: 550; }
 .login-points li p { margin-top: 5px; color: var(--muted-foreground); font-size: 11px; line-height: 1.8; }
-.login-form-area { display: flex; align-items: center; justify-content: center; padding: 48px; }
+.login-form-area { display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; padding: 48px; }
 .login-card { width: 100%; max-width: 380px; border: 1px solid var(--border); border-radius: calc(var(--radius) + 4px); background: var(--card); }
 .login-card-top { display: flex; flex-direction: column; gap: 10px; padding: 30px 30px 0; }
 .login-card-body { display: flex; flex-direction: column; gap: 24px; padding: 24px 30px 30px; }
@@ -353,6 +353,12 @@
 .login-password input { padding-right: 42px; }
 .login-password button { position: absolute; right: 6px; top: 50%; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; transform: translateY(-50%); color: var(--muted-foreground); }
 .login-footer { display: flex; justify-content: space-between; gap: 12px; padding: 22px 36px; border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: 10px; }
+
+/* 登录页演示入口（仅开发服务器渲染）与顶栏演示徽标 */
+.login-demo-entry { display: inline-flex; align-items: center; gap: 4px; padding: 9px 16px; border: 1px dashed var(--border); border-radius: 999px; background: transparent; color: var(--muted-foreground); font-size: 12px; line-height: 1; cursor: pointer; transition: color .15s ease, border-color .15s ease; }
+.login-demo-entry span { color: var(--primary); font-weight: 600; }
+.login-demo-entry:hover { color: var(--foreground); border-color: var(--primary); }
+.demo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--warn); border-radius: 999px; color: var(--warn); font-size: 11px; font-weight: 600; white-space: nowrap; }
 
 @media (min-width: 768px) { .mobile-tabbar { display: none; } }
 @media (max-width: 1150px) {

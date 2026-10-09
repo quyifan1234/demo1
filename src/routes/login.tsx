@@ -8,6 +8,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useAuth } from '../lib/auth';
+import { enablePreviewDemo } from '../lib/preview-demo';
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -66,6 +67,12 @@ function LoginPage() {
     setDone(false);
   };
 
+  /** 打开本地演示模式：写入开关后整页刷新，让 AuthProvider 以示例用户启动 */
+  const enterDemo = () => {
+    enablePreviewDemo();
+    window.location.reload();
+  };
+
   return (
     <div className="login-layout">
       <header className="login-toolbar">
@@ -115,6 +122,12 @@ function LoginPage() {
             </CardContent>
             <CardFooter className="flex justify-center gap-2 border-t py-4"><ShieldCheck size={13} className="text-muted-foreground" aria-hidden="true" /><span className="text-[10px] text-muted-foreground">内测阶段 · 注册需要邀请码</span></CardFooter>
           </Card>
+          {/* 仅开发服务器可见：免登录浏览示例数据，便于本地预览与验收 */}
+          {import.meta.env.DEV && (
+            <button type="button" className="login-demo-entry" onClick={enterDemo}>
+              无需账号？<span>进入演示模式</span>，用示例数据浏览全部页面
+            </button>
+          )}
         </section>
       </main>
       <footer className="login-footer"><span>SI 装备库 / 个人 AI 资源工作台</span><span>应用 · 素材 · 技能 · 密钥</span></footer>

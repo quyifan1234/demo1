@@ -2,6 +2,10 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { verifyInviteCode } from './invite';
+import { DEMO_USER, disablePreviewDemo, isPreviewDemoEnabled } from './preview-demo';
+
+/** 演示模式：不访问云端鉴权，直接使用本地示例用户 */
+const DEMO = isPreviewDemoEnabled();
 
 interface AuthCtx {
   user: User | null;
@@ -18,6 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (DEMO) {
+      setUser(DEMO_USER as User);
+      setReady(true);
+      return;
+    }
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null);
       setReady(true);
@@ -27,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (DEMO) return;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       // 透出真实错误便于诊断；仅对"凭证无效"做友好文案
@@ -39,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, inviteCode: string) => {
+    if (DEMO) return;
     const valid = await verifyInviteCode(inviteCode);
     if (!valid) throw new Error('邀请码不正确，请检查后重试');
     const { error } = await supabase.auth.signUp({ email, password });
@@ -46,6 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    if (DEMO) {
+      // 退出演示：关掉开关并整页刷新，回到真实的登录页
+      disablePreviewDemo();
+      window.location.reload();
+      return;
+    }
     await supabase.auth.signOut();
   };
 
