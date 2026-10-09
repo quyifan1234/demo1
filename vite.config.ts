@@ -13,7 +13,8 @@ import tsConfigPaths from "vite-tsconfig-paths";
  */
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const proxyTarget = env.MEOO_PROXY_TARGET;
+  const proxyTarget = env.MEOO_PROXY_TARGET || 'https://yhqzletzhzij4sax.database.meoo.xyz';
+  const projectUrlId = env.MEOO_PROJECT_URL_ID || 'wgh68uu2zihu';
 
   return {
     // Local credentials are only defined for the dev server, never for publish builds.
@@ -32,7 +33,7 @@ export default defineConfig(({ mode, command }) => {
       // HMR 默认关闭：沙筆预览 iframe 下 HMR 的整页 reload 会放大任何 transform error
       // 如需热更，改为: hmr: { clientPort: 443, protocol: 'wss' }
       hmr: false,
-      ...(proxyTarget ? {
+      ...(command === 'serve' ? {
         proxy: {
           '/sb-api': {
             target: proxyTarget,
@@ -40,7 +41,7 @@ export default defineConfig(({ mode, command }) => {
             secure: true,
             ws: true,
             rewrite: (requestPath: string) => requestPath.replace(/^\/sb-api(?=\/|\?|$)/, ''),
-            headers: { 'X-Meoo-Source': 'local-dev', 'OneDay-App-Id': env.MEOO_PROJECT_URL_ID },
+            headers: { 'X-Meoo-Source': 'local-dev', 'OneDay-App-Id': projectUrlId },
           },
         },
       } : {}),
