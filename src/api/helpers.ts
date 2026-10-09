@@ -6,9 +6,9 @@ export function requireUserId(userId: string | null | undefined): string {
 }
 
 /** Supabase select 可能因 RLS 返回空数组而不报错，统一在此判断 */
-export function ensureWritten<T>(data: T[] | null, action: string): T[] {
+export function ensureWritten<T>(data: T[] | null, action: string, customErrorMsg?: string): T[] {
   if (!data || data.length === 0) {
-    throw new Error(`${action}失败：可能被权限策略拦截，请确认已登录`);
+    throw new Error(customErrorMsg || `${action}失败：可能被权限策略拦截，请确认已登录`);
   }
   return data;
 }
