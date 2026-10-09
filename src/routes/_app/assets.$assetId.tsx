@@ -34,7 +34,7 @@ function AssetDetail() {
 
   return (
     <div>
-      <button onClick={() => navigate({ to: '/assets' })}
+      <button type="button" onClick={() => navigate({ to: '/assets' })}
         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft size={15} />返回素材库
       </button>
