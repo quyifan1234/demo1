@@ -7,10 +7,12 @@
 *.bak
 *.orig
 
-# 环境变量与密钥
+# 环境变量与密钥（不要提交真实值；本地用 `meoo cloud pull-env` 生成 .env）
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.sample
+!.env.template
 *.pem
 *.key
 
