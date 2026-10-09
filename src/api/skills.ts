@@ -1,6 +1,6 @@
 import { supabase } from '@/supabase/client';
 import type { Database } from '@/supabase/types';
-import { requireUserId } from './helpers';
+import { ensureWritten, requireUserId } from './helpers';
 
 type SkillRow = Database['public']['Tables']['skills']['Row'];
 type SkillInsert = Database['public']['Tables']['skills']['Insert'];
@@ -28,8 +28,8 @@ export async function createSkill(
     .insert({ ...payload, user_id: uid })
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('写入失败：请确认已登录');
-  return data[0];
+  const written = ensureWritten(data, '创建', '写入失败：请确认已登录');
+  return written[0];
 }
 
 export async function updateSkill(userId: string, id: string, patch: SkillUpdate): Promise<SkillRow> {
@@ -41,8 +41,8 @@ export async function updateSkill(userId: string, id: string, patch: SkillUpdate
     .eq('user_id', uid)
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('更新失败：记录不存在或无权修改');
-  return data[0];
+  const written = ensureWritten(data, '更新', '更新失败：记录不存在或无权修改');
+  return written[0];
 }
 
 export async function deleteSkill(userId: string, id: string): Promise<void> {
@@ -54,7 +54,7 @@ export async function deleteSkill(userId: string, id: string): Promise<void> {
     .eq('user_id', uid)
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('删除失败：记录不存在或无权删除');
+  ensureWritten(data, '删除', '删除失败：记录不存在或无权删除');
 }
 
 export async function bumpUsage(userId: string, skill: SkillRow): Promise<void> {
@@ -84,7 +84,7 @@ export async function linkSkillToApp(userId: string, appId: string, skillId: str
     .insert({ user_id: uid, app_id: appId, skill_id: skillId })
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('绑定失败：请确认已登录');
+  ensureWritten(data, '绑定', '绑定失败：请确认已登录');
 }
 
 export async function unlinkSkillFromApp(userId: string, linkId: string): Promise<void> {
@@ -96,7 +96,7 @@ export async function unlinkSkillFromApp(userId: string, linkId: string): Promis
     .eq('user_id', uid)
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('解绑失败：记录不存在或无权删除');
+  ensureWritten(data, '解绑', '解绑失败：记录不存在或无权删除');
 }
 
 export type { SkillRow, SkillLink };

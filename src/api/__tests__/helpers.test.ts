@@ -20,6 +20,11 @@ describe('helpers', () => {
       expect(() => ensureWritten([], '更新')).toThrow('更新失败：可能被权限策略拦截，请确认已登录');
     });
 
+    it('throws custom error message if provided', () => {
+      expect(() => ensureWritten(null, '创建', '自定义错误')).toThrow('自定义错误');
+      expect(() => ensureWritten([], '更新', '另一个自定义错误')).toThrow('另一个自定义错误');
+    });
+
     it('returns data when present', () => {
       const data = [{ id: 1 }];
       expect(ensureWritten(data, '操作')).toBe(data);
@@ -27,6 +32,10 @@ describe('helpers', () => {
   });
 
   describe('maskKey', () => {
+    it('returns empty string for empty input', () => {
+      expect(maskKey('')).toBe('');
+    });
+
     it('masks keys of length <= 8', () => {
       expect(maskKey('12')).toBe('****'); // fails! original implementation expects **** for length <=4 if max
       expect(maskKey('12345')).toBe('*****');

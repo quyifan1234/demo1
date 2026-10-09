@@ -1,6 +1,6 @@
 import { supabase } from '@/supabase/client';
 import type { Database } from '@/supabase/types';
-import { requireUserId } from './helpers';
+import { ensureWritten, requireUserId } from './helpers';
 
 type PrefRow = Database['public']['Tables']['user_prefs']['Row'];
 
@@ -29,8 +29,8 @@ export async function savePrefs(
     )
     .select();
   if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('保存失败：请确认已登录');
-  return data[0];
+  const written = ensureWritten(data, '保存', '保存失败：请确认已登录');
+  return written[0];
 }
 
 export type { PrefRow };

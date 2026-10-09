@@ -6,8 +6,11 @@ export function requireUserId(userId: string | null | undefined): string {
 }
 
 /** Supabase select 可能因 RLS 返回空数组而不报错，统一在此判断 */
-export function ensureWritten<T>(data: T[] | null, action: string): T[] {
+export function ensureWritten<T>(data: T[] | null, action: string, customErrorMsg?: string): T[] {
   if (!data || data.length === 0) {
+    if (customErrorMsg) {
+      throw new Error(customErrorMsg);
+    }
     throw new Error(`${action}失败：可能被权限策略拦截，请确认已登录`);
   }
   return data;
@@ -15,6 +18,7 @@ export function ensureWritten<T>(data: T[] | null, action: string): T[] {
 
 /** 密钥打码：前4后4 */
 export function maskKey(value: string): string {
+  if (!value) return '';
   if (value.length <= 8) return '*'.repeat(Math.max(value.length, 4));
   return `${value.slice(0, 4)}${'*'.repeat(Math.min(value.length - 8, 12))}${value.slice(-4)}`;
 }
