@@ -6,7 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAssets, useMutate } from '../../lib/queries';
 import { ASSET_CATEGORIES } from '../../lib/types';
 import { PageHeader, EmptyState, Highlight, QueryError, InitialAvatar } from '../../components/bits';
-import { CapsuleSearch, FilterChip, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
+import { CapsuleSearch, CategoryFilters, FilterChip, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
 
 export const Route = createFileRoute('/_app/assets')({
   component: AssetsPage,
@@ -51,7 +51,7 @@ function AssetsPage() {
   return (
     <div>
       <PageHeader title="素材库" desc="收藏开源项目、设计资源与参考链接"
-        action={<Button className="rounded-full shadow-none" onClick={() => navigate({ to: '/assets/new' })}><Plus size={16} />新增</Button>} />
+        action={<Button className="shadow-none" onClick={() => navigate({ to: '/assets/new' })}><Plus size={16} />新增</Button>} />
 
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center">
         <CapsuleSearch value={q} onChange={setQ} placeholder="搜索名称、描述、网址、标签" />
@@ -61,11 +61,7 @@ function AssetsPage() {
           </span>
         </FilterChip>
       </div>
-      <div className="mb-6 flex flex-wrap gap-2">
-        {['全部', ...ASSET_CATEGORIES].map((c) => (
-          <FilterChip key={c} active={cat === c} onClick={() => setCat(c)}>{c}</FilterChip>
-        ))}
-      </div>
+      <div className="mb-6"><CategoryFilters options={['全部', ...ASSET_CATEGORIES]} value={cat} onChange={setCat} /></div>
 
       {isLoading ? (
         <RowSkeleton rows={4} />

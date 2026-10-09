@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { useKeys, useApps, useKeyLinks, useMutate } from '../../lib/queries';
 import { PageHeader, EmptyState, MaskedKey, Highlight, QueryError, InitialAvatar } from '../../components/bits';
-import { CapsuleSearch, FilterChip, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
+import { CapsuleSearch, CategoryFilters, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/_app/keys')({
@@ -84,16 +84,12 @@ function KeysPage() {
   return (
     <div>
       <PageHeader title="密钥" desc="默认打码显示，仅你本人可见"
-        action={<Button className="rounded-full shadow-none" onClick={() => navigate({ to: '/keys/$keyId', params: { keyId: 'new' } })}><Plus size={16} />新增</Button>} />
+        action={<Button className="shadow-none" onClick={() => navigate({ to: '/keys/$keyId', params: { keyId: 'new' } })}><Plus size={16} />新增</Button>} />
 
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center">
         <CapsuleSearch value={q} onChange={setQ} placeholder="搜索密钥名称、平台" />
       </div>
-      <div className="mb-6 flex flex-wrap gap-2">
-        {platforms.map((p) => (
-          <FilterChip key={p} active={platform === p} onClick={() => setPlatform(p)}>{p}</FilterChip>
-        ))}
-      </div>
+      <div className="mb-6"><CategoryFilters options={platforms} value={platform} onChange={setPlatform} /></div>
 
       {isLoading ? (
         <RowSkeleton rows={3} />
@@ -105,7 +101,7 @@ function KeysPage() {
       ) : (
         <RowList>
           {filtered.map((k) => (
-            <div key={k.id} className="flex items-center gap-2 px-1 py-3">
+            <div key={k.id} className="flex flex-col items-stretch gap-3 py-4 sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <InitialAvatar name={k.name} size={48} />
                 <div className="min-w-0 flex-1">
@@ -120,7 +116,7 @@ function KeysPage() {
                   <div className="mt-1.5"><MaskedKey value={k.key_value} revealed={revealed.includes(k.id)} /></div>
                 </div>
               </div>
-              <div className="flex shrink-0 items-center">
+              <div className="flex shrink-0 items-center justify-end gap-1">
                 <Switch checked={k.is_active} onCheckedChange={(v) => save('api_keys', { ...k, is_active: v }, [['keys']])} title={k.is_active ? '停用' : '启用'} />
                 <RowAction title={revealed.includes(k.id) ? '隐藏' : '显示 15 秒'} onClick={() => onEye(k.id)}>
                   {revealed.includes(k.id) ? <EyeOff size={16} /> : <Eye size={16} />}

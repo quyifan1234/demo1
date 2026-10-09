@@ -9,7 +9,7 @@ import { APP_CATEGORIES, APP_STATUSES, SORTS } from '../../lib/types';
 import { toast } from 'sonner';
 import { isQuotaAlert } from '../../lib/format';
 import { InitialAvatar, PageHeader, QuotaBar, EmptyState, Highlight, QueryError } from '../../components/bits';
-import { CapsuleSearch, FilterChip, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
+import { CapsuleSearch, CategoryFilters, FilterChip, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
 
 export const Route = createFileRoute('/_app/apps')({
   component: AppsPage,
@@ -76,17 +76,17 @@ function AppsPage() {
   return (
     <div>
       <PageHeader title="应用" desc={`${filtered.length} 个应用`}
-        action={<Button className="rounded-full shadow-none" onClick={() => navigate({ to: '/apps/new' })}><Plus size={16} />新增</Button>} />
+        action={<Button className="shadow-none" onClick={() => navigate({ to: '/apps/new' })}><Plus size={16} />新增</Button>} />
 
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center">
         <CapsuleSearch value={q} onChange={setQ} placeholder="搜索名称、描述、擅长领域、网址" />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="h-10 w-28 rounded-full border-0 bg-muted shadow-none"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-10 w-28 bg-card shadow-none"><SelectValue /></SelectTrigger>
             <SelectContent>{['全部', ...APP_STATUSES].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
           </Select>
           <Select value={sort} onValueChange={setSort}>
-            <SelectTrigger className="h-10 w-32 rounded-full border-0 bg-muted shadow-none"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-10 w-32 bg-card shadow-none"><SelectValue /></SelectTrigger>
             <SelectContent>{SORTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
           <FilterChip active={favOnly} onClick={() => setFavOnly(!favOnly)}>
@@ -97,11 +97,7 @@ function AppsPage() {
         </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        {['全部', ...APP_CATEGORIES].map((c) => (
-          <FilterChip key={c} active={cat === c} onClick={() => setCat(c)}>{c}</FilterChip>
-        ))}
-      </div>
+      <div className="mb-6"><CategoryFilters options={['全部', ...APP_CATEGORIES]} value={cat} onChange={setCat} /></div>
 
       {isLoading ? (
         <RowSkeleton rows={4} />

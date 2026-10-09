@@ -6,9 +6,9 @@ import { Button } from './ui/button';
 
 export function InitialAvatar({ name, size = 40 }: { name: string; size?: number }) {
   const ch = firstChar(name);
-  // Apple Music v2：无图封面 = 纯色块 + 首字（颜色按名称 hash 取 12 纯色之一，无渐变无阴影）
+  // 保留名称 hash 类名；新主题将无图封面统一为中性底色与主题色首字。
   return (
-    <div className={cn('am-cover', coverClass(name))}
+    <div className={cn('am-cover', coverClass(name))} aria-hidden="true"
       style={{ width: size, height: size, fontSize: size * 0.42 }}>
       {ch}
     </div>
@@ -31,12 +31,12 @@ export function QuotaBar({ remaining, total, thresholdPct = 20, unit = '次' }: 
   if (total == null || total <= 0) return <span className="text-xs text-muted-foreground">无限额度</span>;
   const alert = isQuotaAlert(remaining, total, thresholdPct);
   return (
-    <div className="space-y-1">
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-        <div className={cn('h-full rounded-full', alert ? 'bg-warn' : 'bg-primary')} style={{ width: `${quotaPct(remaining, total) * 100}%` }} />
+    <div className="quota-meter">
+      <div className="quota-meter-track" role="progressbar" aria-label="剩余额度比例" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(quotaPct(remaining, total) * 100)}>
+        <div className={cn(alert ? 'bg-warn' : 'bg-primary')} style={{ width: `${quotaPct(remaining, total) * 100}%` }} />
       </div>
-      <div className={cn('text-xs', alert ? 'text-warn font-semibold' : 'text-muted-foreground')}>
-        剩余 {remaining ?? 0} / {total} {unit}{alert ? ' · 额度告急' : ''}
+      <div className={cn('quota-meter-label', alert && 'text-warn')}>
+        {remaining ?? 0} / {total} {unit}{alert ? ' · 偏低' : ''}
       </div>
     </div>
   );
@@ -110,18 +110,18 @@ export function RequiredMark() {
 }
 
 export function MaskedKey({ value, revealed }: { value: string; revealed: boolean }) {
-  return <code className="text-sm font-mono bg-muted px-2 py-1 rounded">{revealed ? value : maskKey(value)}</code>;
+  return <code className="inline-block max-w-full truncate rounded bg-muted px-2 py-1 align-middle font-mono text-xs">{revealed ? value : maskKey(value)}</code>;
 }
 
 export function PageHeader({ title, desc, action }: { title: string; desc?: string; action?: React.ReactNode }) {
-  // Apple Music v2：大标题 34px Heavy；随滚动折叠为小标题由 AppShell 的吸顶条实现
+  // 大标题随主题切换字体，长描述允许自然换行。
   return (
-    <div className="flex items-start justify-between gap-3 mb-6">
+    <div className="page-header">
       <div className="min-w-0">
-        <h1 className="text-[34px] leading-[1.15] font-extrabold tracking-tight truncate">{title}</h1>
-        {desc ? <p className="text-[13px] text-muted-foreground mt-1 truncate">{desc}</p> : null}
+        <h1 className="page-title">{title}</h1>
+        {desc ? <p className="page-description">{desc}</p> : null}
       </div>
-      {action ? <div className="flex shrink-0 items-center gap-2 pt-2">{action}</div> : null}
+      {action ? <div className="flex shrink-0 items-center gap-2 pt-1">{action}</div> : null}
     </div>
   );
 }

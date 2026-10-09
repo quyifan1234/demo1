@@ -1,38 +1,35 @@
-// @ts-nocheck — 平台 agent 遗留死代码，不再维护
-import { LogOut, UserCircle2 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
+import { ChevronRight, FolderOpen, KeyRound, Layers, Plus, Sparkles } from 'lucide-react';
+import { ALL_NAV, isNavActive } from './libraryNav';
+import { ThemeSwitch } from './theme-switch';
+import { Button } from './ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 export function TopBar() {
-  const { user, signOut } = useAuth();
-  const username = (user?.user_metadata?.username as string) ?? '已登录用户';
-
-  async function handleSignOut() {
-    try {
-      await signOut();
-      toast.success('已退出登录');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : '退出失败');
-    }
-  }
-
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const current = ALL_NAV.find((entry) => isNavActive(pathname, entry));
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur md:px-6">
-      <div className="flex items-center gap-2 text-sm font-medium md:hidden">
-        <UserCircle2 size={16} className="text-muted-foreground" />
-        <span className="truncate">{username}</span>
+    <header className="workspace-toolbar">
+      <nav className="toolbar-crumb" aria-label="面包屑">
+        <Link to="/">SI<span className="hidden lg:inline"> 装备库</span></Link>
+        <ChevronRight size={13} aria-hidden="true" />
+        <span>{pathname === '/' ? '资料库' : current?.label ?? '资料库'}</span>
+      </nav>
+      <div className="toolbar-actions">
+        <ThemeSwitch />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button><Plus data-icon="inline-start" /><span>新增装备</span></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuGroup>
+              <DropdownMenuItem onSelect={() => navigate({ to: '/apps/new' })}><Layers />新增应用</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate({ to: '/assets/new' })}><FolderOpen />新增素材</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate({ to: '/skills/$skillId', params: { skillId: 'new' } })}><Sparkles />新增技能</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate({ to: '/keys/$keyId', params: { keyId: 'new' } })}><KeyRound />新增密钥</DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <div className="hidden items-center gap-2 text-sm md:flex">
-        <UserCircle2 size={16} className="text-muted-foreground" />
-        <span>{username}</span>
-      </div>
-      <button
-        onClick={handleSignOut}
-        className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-      >
-        <LogOut size={14} />
-        退出
-      </button>
     </header>
   );
 }

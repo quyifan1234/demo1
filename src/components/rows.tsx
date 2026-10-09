@@ -1,10 +1,11 @@
 import { Search, ChevronRight } from 'lucide-react';
 import { Input } from './ui/input';
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { cn } from '../lib/utils';
 
 /**
- * 列表页共享视觉原语（Apple Music v2）：
- * 胶囊搜索框 / 筛选 chips / hairline 分隔行 / chevron / 行内操作按钮 / 骨架行。
+ * 三主题列表页共享视觉原语：
+ * 搜索框 / 分类筛选 / 分隔行 / chevron / 行内操作 / 骨架行。
  * 只管视觉，过滤/排序/增删改逻辑全部留在各页面。
  */
 
@@ -19,7 +20,7 @@ export function CapsuleSearch({
   placeholder?: string;
 }) {
   return (
-    <div className="relative w-full sm:max-w-sm">
+    <div className="search-input-wrap">
       <Search
         size={16}
         className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -28,7 +29,8 @@ export function CapsuleSearch({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-10 rounded-full border-0 bg-muted pl-10 pr-4 text-[15px] shadow-none focus-visible:ring-1"
+        aria-label={placeholder ?? '搜索资料库'}
+        type="search"
       />
     </div>
   );
@@ -47,22 +49,27 @@ export function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={cn(
-        'rounded-full px-4 py-1.5 text-sm transition-colors',
-        active
-          ? 'bg-primary/10 font-semibold text-primary'
-          : 'bg-muted text-muted-foreground hover:text-foreground',
-      )}
+      type="button"
+      aria-pressed={active}
+      className="filter-chip"
     >
       {children}
     </button>
   );
 }
 
-/** hairline 分隔的列表容器（无卡片、无阴影） */
+export function CategoryFilters({ options, value, onChange }: {
+  options: string[]; value: string; onChange: (value: string) => void;
+}) {
+  return <ToggleGroup type="single" value={value} onValueChange={(next) => next && onChange(next)} className="category-toggles" aria-label="分类筛选">
+    {options.map((option) => <ToggleGroupItem key={option} value={option}>{option}</ToggleGroupItem>)}
+  </ToggleGroup>;
+}
+
+/** hairline 分隔的列表容器（主题面板、无阴影） */
 export function RowList({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('divide-y divide-border border-y border-border bg-background', className)}>
+    <div className={cn('resource-list divide-y divide-border', className)}>
       {children}
     </div>
   );
@@ -96,9 +103,8 @@ export function RowAction({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors',
-        'hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50',
-        danger && 'hover:text-destructive',
+        'row-action',
+        danger && 'is-danger',
         className,
       )}
     >
@@ -127,7 +133,7 @@ export function RowSkeleton({ rows = 4 }: { rows?: number }) {
 /** 分组小标题：13pt 次文字 */
 export function SectionTitle({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <h2 className={cn('mb-2 mt-8 text-[13px] font-semibold text-muted-foreground first:mt-0', className)}>
+    <h2 className={cn('section-title first:mt-0', className)}>
       {children}
     </h2>
   );
