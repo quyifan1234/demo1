@@ -29,7 +29,8 @@ function LoginPage() {
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const doneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -42,16 +43,25 @@ function LoginPage() {
     e?.preventDefault();
     if (busy || done) return;
     setError(null);
+    setInfo(null);
     if (!email.trim() || !password) { setError('请填写账号和密码'); return; }
     if (mode === 'signup' && password.length < 6) { setError('密码至少 6 位'); return; }
     if (mode === 'signup' && !inviteCode.trim()) { setError('注册需要邀请码'); return; }
     setBusy(true);
     try {
-      if (mode === 'signin') await signIn(email.trim(), password);
-      else await signUp(email.trim(), password, inviteCode);
-      setDone(true);
-      if (doneTimeoutRef.current) clearTimeout(doneTimeoutRef.current);
-      doneTimeoutRef.current = setTimeout(() => navigate({ to: '/', replace: true }), 600);
+      if (mode === 'signin') {
+        await signIn(email.trim(), password);
+        enter('登录成功，正在进入…');
+      } else {
+        const { needsEmailConfirm } = await signUp(email.trim(), password, inviteCode);
+        // 需要邮箱确认时没有会话，直接跳转会被弹回登录页（像死循环），改为提示 + 切到登录态
+        if (needsEmailConfirm) {
+          setMode('signin');
+          setInfo('注册成功！请先到邮箱点确认链接，再回来登录。');
+          return;
+        }
+        enter('注册成功，正在进入…');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '操作失败');
     } finally {
@@ -59,11 +69,19 @@ function LoginPage() {
     }
   };
 
+  /** 成功后短暂展示结果文案，再进入工作台 */
+  const enter = (message: string) => {
+    setDone(message);
+    if (doneTimeoutRef.current) clearTimeout(doneTimeoutRef.current);
+    doneTimeoutRef.current = setTimeout(() => navigate({ to: '/', replace: true }), 600);
+  };
+
   const switchMode = (next: 'signin' | 'signup') => {
     if (next === mode) return;
     setMode(next);
     setError(null);
-    setDone(false);
+    setDone(null);
+    setInfo(null);
   };
 
   return (
@@ -108,8 +126,9 @@ function LoginPage() {
                 </div></div>
                 {mode === 'signup' && <div className="login-field"><Label htmlFor="login-invite">邀请码</Label><Input id="login-invite" placeholder="输入内测邀请码" required value={inviteCode} onChange={(event) => setInviteCode(event.target.value)} /></div>}
                 {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
-                <Button type="submit" className="w-full" disabled={busy || done}>
-                  {done ? <><Check data-icon="inline-start" />{mode === 'signin' ? '登录成功，正在进入…' : '注册成功，正在进入…'}</> : busy ? '请稍候…' : <>{mode === 'signin' ? '进入装备库' : '注册并登录'}<ArrowRight data-icon="inline-end" /></>}
+                {info && <p role="status" className="text-xs text-primary">{info}</p>}
+                <Button type="submit" className="w-full" disabled={busy || !!done}>
+                  {done ? <><Check data-icon="inline-start" />{done}</> : busy ? '请稍候…' : <>{mode === 'signin' ? '进入装备库' : '注册并登录'}<ArrowRight data-icon="inline-end" /></>}
                 </Button>
               </form>
             </CardContent>

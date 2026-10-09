@@ -7,7 +7,7 @@ interface AuthCtx {
   user: User | null;
   ready: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, inviteCode: string) => Promise<void>;
+  signUp: (email: string, password: string, inviteCode: string) => Promise<{ needsEmailConfirm: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -41,8 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, inviteCode: string) => {
     const valid = await verifyInviteCode(inviteCode);
     if (!valid) throw new Error('邀请码不正确，请检查后重试');
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message.includes('already') ? '该账号已被注册，请直接登录' : `注册失败：${error.message}`);
+    // 开启邮箱确认时 signUp 不返回会话，此时直接进工作台会被弹回登录页（看起来像死循环），
+    // 由调用方提示「先去邮箱确认再登录」。
+    return { needsEmailConfirm: !data.session };
   };
 
   const signOut = async () => {

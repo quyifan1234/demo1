@@ -4,13 +4,16 @@ import { ArrowLeft, Pencil, Trash2, Plus, ExternalLink, Star } from 'lucide-reac
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { useApps, useKeys, useSkills, useOutputs, useKeyLinks, useSkillLinks, usePrefs, useMutate } from '../../lib/queries';
-import { OUTPUT_KINDS } from '../../lib/types';
+import { OUTPUT_KINDS, type AppOutput } from '../../lib/types';
 import { fmtDate } from '../../lib/format';
 import { InitialAvatar, QuotaBar, Stars, EmptyState, DetailSkeleton } from '../../components/bits';
+import { toast } from 'sonner';
+import { useDocTitle } from '../../lib/use-doc-title';
 import { RowList, RowChevron, SectionTitle, RowAction } from '../../components/rows';
 
 export const Route = createFileRoute('/_app/apps/$appId')({
@@ -37,19 +40,28 @@ function AppDetail() {
   const [outTitle, setOutTitle] = useState('');
   const [outKind, setOutKind] = useState('文案');
   const [outContent, setOutContent] = useState('');
+  const [outError, setOutError] = useState<string | null>(null);
 
   const app = apps.find((a) => a.id === appId);
+  // 浏览器标签页跟随当前应用，多开标签时能一眼分辨（必须在提前 return 之前调用）
+  useDocTitle(app?.name);
   // 加载门控：数据就绪前只渲染骨架，绝不先渲染"不存在"（修复 reload 闪现 bug）
   if (appsLoading) return <DetailSkeleton />;
-  if (!app) return <p className="text-muted-foreground text-sm">应用不存在或已被删除</p>;
+  if (!app) return (
+    <EmptyState title="应用不存在或已被删除" desc="它可能已被删除，或者链接已经失效"
+      action={<Button variant="link" className="text-[17px]" onClick={() => navigate({ to: '/apps' })}>返回应用列表</Button>} />
+  );
   const threshold = prefs?.quota_threshold ?? 20;
 
   const linkedKeys = keyLinks.filter((l) => l.app_id === appId).map((l) => keys.find((k) => k.id === l.key_id)).filter(Boolean);
   const linkedSkills = skillLinks.filter((l) => l.app_id === appId).map((l) => skills.find((s) => s.id === l.skill_id)).filter(Boolean);
   const appOutputs = outputs.filter((o) => o.app_id === appId);
+  // 自定义扣减的输入校验：非法时给出原因并禁用确定，而不是点了没反应
+  const consumeAmount = Number(consumeAmt);
+  const consumeValid = consumeAmt.trim() !== '' && Number.isFinite(consumeAmount) && consumeAmount >= 0;
 
-  const updateQuota = async (remaining: number | null, total?: number | null) => {
-    await save('ai_apps', {
+  const updateQuota = async (remaining: number | null, total?: number | null, success?: string) =>
+    save('ai_apps', {
       ...app,
       quota_remaining: remaining,
       quota_total: total ?? app.quota_total,
@@ -58,20 +70,50 @@ function AppDetail() {
       optimistic: (old) => old.map((a: any) => a.id === appId
         ? { ...a, quota_remaining: remaining, quota_total: total ?? a.quota_total, quota_updated_at: new Date().toISOString() }
         : a),
+      success,
+      errorMessage: '额度更新失败，请稍后重试',
     });
-  };
 
+  // 扣减/重置都要给出结果反馈，否则点完不知道到底记没记上
   const consume = async (amt: number) => {
     const cur = app.quota_remaining ?? 0;
-    await updateQuota(Math.max(0, cur - amt));
+    const next = Math.max(0, cur - amt);
+    if (!(await updateQuota(next, undefined, `已扣减 ${amt} ${app.quota_unit}，剩余 ${next} ${app.quota_unit}`))) return;
     setConsumeOpen(false);
     setConsumeAmt('');
   };
 
   const addOutput = async () => {
-    if (!outTitle.trim()) return;
-    await save('app_outputs', { app_id: appId, title: outTitle.trim(), kind: outKind, content: outContent.trim() || null }, [['outputs']]);
+    if (!outTitle.trim()) {
+      // 之前这里静默 return，用户会以为「保存」按钮坏了
+      setOutError('请填写产物名称');
+      return;
+    }
+    setOutError(null);
+    const ok = await save('app_outputs', { app_id: appId, title: outTitle.trim(), kind: outKind, content: outContent.trim() || null }, [['outputs']], {
+      success: '已添加产物',
+      errorMessage: '产物保存失败，请稍后重试',
+    });
+    if (!ok) return;
     setOutOpen(false); setOutTitle(''); setOutContent('');
+  };
+
+  /** 产物是随手记下来的内容，误删代价高：删除后给一次撤销机会，而不是先弹确认框 */
+  const removeOutput = async (output: AppOutput) => {
+    const ok = await remove('app_outputs', output.id, [['outputs']], {
+      optimistic: (old) => old.filter((o: any) => o.id !== output.id),
+    });
+    if (!ok) return;
+    toast('已删除产物', {
+      description: output.title,
+      action: {
+        label: '撤销',
+        onClick: async () => {
+          // 用原 id 重新插入，撤销后位置和内容都不变
+          await save('app_outputs', { ...output }, [['outputs']], { isNew: true, success: '已恢复' });
+        },
+      },
+    });
   };
 
   return (
@@ -160,7 +202,7 @@ function AppDetail() {
                     <span className="truncate font-medium text-[15px]">{o.title}</span>
                     <Badge variant="outline" className="text-xs shrink-0">{o.kind}</Badge>
                   </div>
-                  <RowAction title="删除产物" danger onClick={() => remove('app_outputs', o.id, [['outputs']])}>
+                  <RowAction title="删除产物" danger onClick={() => removeOutput(o)}>
                     <Trash2 size={14} />
                   </RowAction>
                 </div>
@@ -206,13 +248,21 @@ function AppDetail() {
         <p className="text-xs text-muted-foreground">更新于 {fmtDate(app.updated_at)}</p>
       </div>
 
-      <Dialog open={consumeOpen} onOpenChange={setConsumeOpen}>
+      <Dialog open={consumeOpen} onOpenChange={(open) => { setConsumeOpen(open); if (!open) setConsumeAmt(''); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>自定义扣减</DialogTitle></DialogHeader>
-          <Input placeholder="扣减数量" inputMode="decimal" value={consumeAmt} onChange={(e) => setConsumeAmt(e.target.value)} />
+          <DialogHeader>
+            <DialogTitle>自定义扣减</DialogTitle>
+            <DialogDescription>当前剩余 {app.quota_remaining ?? 0} {app.quota_unit}，扣减后会更新额度记录时间。</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="consume-amount">扣减数量（{app.quota_unit}）</Label>
+            <Input id="consume-amount" placeholder="如 10" inputMode="decimal" value={consumeAmt}
+              onChange={(e) => setConsumeAmt(e.target.value)} aria-invalid={consumeAmt !== '' && !consumeValid} />
+            {consumeAmt !== '' && !consumeValid ? <p role="alert" className="text-xs text-destructive">请输入不小于 0 的数字</p> : null}
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConsumeOpen(false)}>取消</Button>
-            <Button onClick={() => { const n = Number(consumeAmt); if (!Number.isNaN(n) && n >= 0) consume(n); }}>确定</Button>
+            <Button disabled={!consumeValid} onClick={() => consume(consumeAmount)}>确定</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -223,7 +273,7 @@ function AppDetail() {
             <AlertDialogDescription>将剩余额度恢复为总额度（{app.quota_total ?? '未设置'} {app.quota_unit}）。</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={() => updateQuota(app.quota_total)}>恢复满额</AlertDialogAction>
+            <AlertDialogAction onClick={() => updateQuota(app.quota_total, undefined, '已恢复满额')}>恢复满额</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -235,27 +285,48 @@ function AppDetail() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive"
-              onClick={async () => { await remove('ai_apps', appId, [['apps'], ['outputs']], { optimistic: (old) => old.filter((a: any) => a.id !== appId) }); navigate({ to: '/apps' }); }}>
+              onClick={async () => {
+                // 删除成功才离开详情页，失败时留在原地可重试
+                const ok = await remove('ai_apps', appId, [['apps'], ['outputs']], {
+                  optimistic: (old) => old.filter((a: any) => a.id !== appId),
+                  success: '已删除应用',
+                });
+                if (ok) navigate({ to: '/apps' });
+              }}>
               删除
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={outOpen} onOpenChange={setOutOpen}>
+      <Dialog open={outOpen} onOpenChange={(open) => { setOutOpen(open); if (!open) setOutError(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>添加产物</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>添加产物</DialogTitle>
+            <DialogDescription>记录这次用「{app.name}」产出的结果，方便以后回看。</DialogDescription>
+          </DialogHeader>
           <div className="space-y-3">
-            <Input placeholder="产物名称" value={outTitle} onChange={(e) => setOutTitle(e.target.value)} />
-            <Select value={outKind} onValueChange={setOutKind}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{OUTPUT_KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
-            </Select>
-            <Input placeholder="内容或链接" value={outContent} onChange={(e) => setOutContent(e.target.value)} />
+            <div className="space-y-2">
+              <Label htmlFor="output-title">产物名称</Label>
+              <Input id="output-title" placeholder="如 3 月活动文案" value={outTitle}
+                onChange={(e) => setOutTitle(e.target.value)} aria-invalid={!!outError} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="output-kind">类型</Label>
+              <Select value={outKind} onValueChange={setOutKind}>
+                <SelectTrigger id="output-kind"><SelectValue /></SelectTrigger>
+                <SelectContent>{OUTPUT_KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="output-content">内容或链接</Label>
+              <Input id="output-content" placeholder="可留空" value={outContent} onChange={(e) => setOutContent(e.target.value)} />
+            </div>
+            {outError ? <p role="alert" className="text-xs text-destructive">{outError}</p> : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOutOpen(false)}>取消</Button>
-            <Button onClick={addOutput}>保存</Button>
+            <Button disabled={!outTitle.trim()} onClick={addOutput}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

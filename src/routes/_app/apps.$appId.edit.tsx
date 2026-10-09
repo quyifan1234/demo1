@@ -5,6 +5,7 @@ import { Label } from '../../components/ui/label';
 import { useApps, useKeys, useSkills, useKeyLinks, useSkillLinks, useMutate, replaceLinks } from '../../lib/queries';
 import { PageHeader, DetailSkeleton } from '../../components/bits';
 import { AppForm, toFormValue, type AppFormValue } from '../../components/app-form';
+import { UnsavedGuardDialog, useUnsavedGuard } from '../../components/unsaved-guard';
 
 export const Route = createFileRoute('/_app/apps/$appId/edit')({
   component: EditApp,
@@ -23,6 +24,8 @@ function EditApp() {
   const [selKeys, setSelKeys] = useState<string[] | null>(null);
   const [selSkills, setSelSkills] = useState<string[] | null>(null);
 
+  const { blocker, markDirty, clearDirty } = useUnsavedGuard();
+
   const app = apps.find((a) => a.id === appId);
   // 加载门控：数据就绪前只渲染骨架，绝不先渲染"不存在"（修复 reload 闪现 bug）
   if (appsLoading) return <DetailSkeleton />;
@@ -30,8 +33,10 @@ function EditApp() {
 
   const curKeys = selKeys ?? keyLinks.filter((l) => l.app_id === appId).map((l) => l.key_id);
   const curSkills = selSkills ?? skillLinks.filter((l) => l.app_id === appId).map((l) => l.skill_id);
-  const toggle = (list: string[], set: (x: string[]) => void, id: string) =>
+  const toggle = (list: string[], set: (x: string[]) => void, id: string) => {
     set(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+    markDirty();
+  };
 
   const submit = async (v: AppFormValue) => {
     setBusy(true);
@@ -45,12 +50,18 @@ function EditApp() {
         status: v.status, rating: v.rating, note: v.note.trim() || null,
       };
       // 乐观更新：保存前先把新值写入缓存，详情页挂载即得新值，不闪现旧标题
-      await save('ai_apps', { ...app, ...patch }, [['apps']], {
+      const ok = await save('ai_apps', { ...app, ...patch }, [['apps']], {
         optimistic: (old) => old.map((a: any) => (a.id === appId ? { ...a, ...patch } : a)),
+        success: '已保存',
+        errorMessage: '应用保存失败，请稍后重试',
       });
-      await replaceLinks('app_key_links', 'key_id', appId, curKeys);
-      await replaceLinks('skill_app_links', 'skill_id', appId, curSkills);
+      // 失败时留在表单，已填内容不丢（toast 已提示原因）
+      if (!ok) return;
+      const keysLinked = await replaceLinks('app_key_links', 'key_id', appId, curKeys);
+      const skillsLinked = await replaceLinks('skill_app_links', 'skill_id', appId, curSkills);
       invalidate([['keyLinks'], ['skillLinks']]);
+      if (!keysLinked || !skillsLinked) return;
+      clearDirty();
       navigate({ to: '/apps/$appId', params: { appId } });
     } finally {
       setBusy(false);
@@ -64,7 +75,8 @@ function EditApp() {
         <ArrowLeft size={15} />返回详情
       </button>
       <PageHeader title="编辑应用" />
-      <div className="max-w-2xl">
+      {/* onChangeCapture：表单内任何输入变化都算「未保存」，离开前会拦一下 */}
+      <div className="max-w-2xl" onChangeCapture={markDirty}>
         {/* key 保证 reload 时数据就绪后表单重新挂载，initial 取到真实值 */}
         <AppForm key={app.id} initial={toFormValue(app)} onSubmit={submit} busy={busy} submitLabel="保存" />
         <div className="mt-8 space-y-5 max-w-2xl">
@@ -74,6 +86,7 @@ function EditApp() {
               {keys.length === 0 ? <span className="text-sm text-muted-foreground">还没有密钥</span> :
                 keys.map((k) => (
                   <button type="button" key={k.id} onClick={() => toggle(curKeys, setSelKeys, k.id)}
+                    aria-pressed={curKeys.includes(k.id)}
                     className={`px-3 py-1.5 rounded-full text-sm border ${curKeys.includes(k.id) ? 'bg-primary/10 text-primary border-primary/30 font-medium' : 'bg-muted text-muted-foreground border-transparent'}`}>
                     {k.name}
                   </button>
@@ -86,6 +99,7 @@ function EditApp() {
               {skills.length === 0 ? <span className="text-sm text-muted-foreground">还没有技能</span> :
                 skills.map((s) => (
                   <button type="button" key={s.id} onClick={() => toggle(curSkills, setSelSkills, s.id)}
+                    aria-pressed={curSkills.includes(s.id)}
                     className={`px-3 py-1.5 rounded-full text-sm border ${curSkills.includes(s.id) ? 'bg-primary/10 text-primary border-primary/30 font-medium' : 'bg-muted text-muted-foreground border-transparent'}`}>
                     {s.name}
                   </button>
@@ -94,6 +108,7 @@ function EditApp() {
           </div>
         </div>
       </div>
+      <UnsavedGuardDialog blocker={blocker} />
     </div>
   );
 }

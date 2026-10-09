@@ -4,7 +4,7 @@ import { Plus, Pencil, Trash2, Copy, Check } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { useSkills, useMutate } from '../../lib/queries';
-import { toast } from 'sonner';
+import { copyText } from '../../lib/clipboard';
 import { SKILL_CATEGORIES } from '../../lib/types';
 import { PageHeader, EmptyState, Highlight, QueryError, InitialAvatar } from '../../components/bits';
 import { CapsuleSearch, CategoryFilters, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
@@ -37,13 +37,8 @@ function SkillsPage() {
   if (!isList) return <Outlet />;
 
   const copyContent = async (id: string, content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      toast.success('已复制');
-    } catch {
-      toast.error('复制失败，请重试');
-      return;
-    }
+    // 复制失败时 copyText 会提示并返回 false，此时不显示「已复制」
+    if (!(await copyText(content, '已复制技能内容'))) return;
     setCopied(id);
     setTimeout(() => setCopied((p) => (p === id ? null : p)), 1500);
   };
@@ -63,8 +58,13 @@ function SkillsPage() {
       ) : isError ? (
         <QueryError onRetry={() => refetch()} />
       ) : filtered.length === 0 ? (
-        <EmptyState title="还没有技能" desc="把反复验证好用的 Prompt 存成技能，随时复用"
-          action={<Button variant="link" className="text-[17px]" onClick={() => navigate({ to: '/skills/$skillId', params: { skillId: 'new' } })}>新增技能</Button>} />
+        skills.length === 0 ? (
+          <EmptyState title="还没有技能" desc="把反复验证好用的 Prompt 存成技能，随时复用"
+            action={<Button variant="link" className="text-[17px]" onClick={() => navigate({ to: '/skills/$skillId', params: { skillId: 'new' } })}>新增技能</Button>} />
+        ) : (
+          <EmptyState title="没有匹配的技能" desc="换个关键词或分类试试"
+            action={<Button variant="link" className="text-[17px]" onClick={() => { setQ(''); setCat('全部'); }}>清除筛选</Button>} />
+        )
       ) : (
         <RowList>
           {filtered.map((s) => (
@@ -88,7 +88,7 @@ function SkillsPage() {
                   </RowAction>
                 ) : null}
                 <RowAction title="编辑" className="hidden sm:flex"
-                  onClick={() => navigate({ to: '/skills/$skillId', params: { skillId: s.id } })}>
+                  onClick={() => navigate({ to: '/skills/$skillId', params: { skillId: s.id }, search: { edit: true } })}>
                   <Pencil size={16} />
                 </RowAction>
                 <RowAction title="删除" danger className="hidden sm:flex" onClick={() => setDelId(s.id)}>
@@ -112,7 +112,10 @@ function SkillsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive"
-              onClick={() => delId && remove('skills', delId, [['skills'], ['skillLinks']]).then(() => setDelId(null))}>
+              onClick={async () => {
+                // 只有真的删成功才关弹窗：失败时 toast 已提示，用户可以重试
+                if (delId && await remove('skills', delId, [['skills'], ['skillLinks']], { success: '已删除技能' })) setDelId(null);
+              }}>
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

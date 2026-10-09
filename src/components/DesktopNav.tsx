@@ -14,8 +14,9 @@ export function DesktopNav() {
   const assets = useAssets();
   const skills = useSkills();
   const keys = useKeys();
+  // 应用列表默认不显示「已弃用」，侧栏计数保持一致，避免数字和列表对不上
   const counts: Record<string, number | undefined> = {
-    '/apps': apps.data?.length, '/assets': assets.data?.length,
+    '/apps': apps.data?.filter((app) => app.status !== '已弃用').length, '/assets': assets.data?.length,
     '/skills': skills.data?.length, '/keys': keys.data?.length,
   };
   const row = (entry: NavEntry) => {

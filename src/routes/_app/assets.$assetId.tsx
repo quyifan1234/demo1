@@ -4,7 +4,8 @@ import { ArrowLeft, ExternalLink, Pencil, Star, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { useAssets, useMutate } from '../../lib/queries';
-import { InitialAvatar, DetailSkeleton } from '../../components/bits';
+import { InitialAvatar, DetailSkeleton, EmptyState } from '../../components/bits';
+import { useDocTitle } from '../../lib/use-doc-title';
 
 export const Route = createFileRoute('/_app/assets/$assetId')({
   component: AssetDetail,
@@ -19,16 +20,23 @@ function AssetDetail() {
   const { save, remove } = useMutate();
   const [delOpen, setDelOpen] = useState(false);
 
-  if (!isDetail) return <Outlet />;
-
   const asset = assets.find((a) => a.id === assetId);
+  // 浏览器标签页跟随当前素材，多开标签时能一眼分辨（必须在提前 return 之前调用）
+  useDocTitle(asset?.name);
+
+  if (!isDetail) return <Outlet />;
   // 加载门控：数据就绪前只渲染骨架，绝不先渲染"不存在"（修复 reload 闪现 bug）
   if (assetsLoading) return <DetailSkeleton />;
-  if (!asset) return <p className="text-muted-foreground text-sm">素材不存在或已被删除</p>;
+  if (!asset) return (
+    <EmptyState title="素材不存在或已被删除" desc="它可能已被删除，或者链接已经失效"
+      action={<Button variant="link" className="text-[17px]" onClick={() => navigate({ to: '/assets' })}>返回素材库</Button>} />
+  );
 
   const toggleFav = async () => {
     await save('assets', { ...asset, is_favorite: !asset.is_favorite }, [['assets']], {
       optimistic: (old) => old.map((x: any) => x.id === assetId ? { ...x, is_favorite: !asset.is_favorite } : x),
+      success: asset.is_favorite ? '已取消收藏' : '已收藏',
+      errorMessage: '收藏状态更新失败，请稍后重试',
     });
   };
 
@@ -101,10 +109,12 @@ function AssetDetail() {
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive"
               onClick={async () => {
-                await remove('assets', assetId, [['assets']], {
+                // 删除成功才离开详情页，失败时留在原地可重试
+                const ok = await remove('assets', assetId, [['assets']], {
                   optimistic: (old) => old.filter((x: any) => x.id !== assetId),
+                  success: '已删除素材',
                 });
-                navigate({ to: '/assets' });
+                if (ok) navigate({ to: '/assets' });
               }}>
               删除
             </AlertDialogAction>

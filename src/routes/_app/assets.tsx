@@ -4,6 +4,7 @@ import { Plus, Star, Pencil, Trash2, Copy, Check } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { useAssets, useMutate } from '../../lib/queries';
+import { copyText } from '../../lib/clipboard';
 import { ASSET_CATEGORIES } from '../../lib/types';
 import { PageHeader, EmptyState, Highlight, QueryError, InitialAvatar } from '../../components/bits';
 import { CapsuleSearch, CategoryFilters, FilterChip, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
@@ -23,6 +24,8 @@ function AssetsPage() {
   const [favOnly, setFavOnly] = useState(false);
   const [delId, setDelId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  // 正在切换收藏的行 id：防重复点击
+  const [toggling, setToggling] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     const terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -35,13 +38,24 @@ function AssetsPage() {
     });
   }, [assets, q, cat, favOnly]);
 
+  // 一键清空筛选，回到完整列表
+  const clearFilters = () => { setQ(''); setCat('全部'); setFavOnly(false); };
+
   const toggleFav = async (id: string, v: boolean) => {
+    if (toggling.has(id)) return; // 请求未完成时禁止重复点击
     const a = assets.find((x) => x.id === id);
-    if (a) await save('assets', { ...a, is_favorite: !v }, [['assets']]);
+    if (!a) return;
+    setToggling((s) => new Set(s).add(id));
+    // 乐观更新：星标立即翻转，失败时由 save 回滚并提示
+    await save('assets', { ...a, is_favorite: !v }, [['assets']], {
+      optimistic: (old) => old.map((x) => (x.id === id ? { ...x, is_favorite: !v } : x)),
+    });
+    setToggling((s) => { const n = new Set(s); n.delete(id); return n; });
   };
 
   const copyUrl = async (id: string, url: string) => {
-    try { await navigator.clipboard.writeText(url); } catch { /* 剪贴板不可用时静默 */ }
+    // 复制成功才显示 ✓；失败由 copyText 统一提示
+    if (!(await copyText(url))) return;
     setCopied(id);
     setTimeout(() => setCopied((p) => (p === id ? null : p)), 1500);
   };
@@ -67,9 +81,12 @@ function AssetsPage() {
         <RowSkeleton rows={4} />
       ) : isError ? (
         <QueryError onRetry={() => refetch()} />
-      ) : filtered.length === 0 ? (
+      ) : assets.length === 0 ? (
         <EmptyState title="还没有素材" desc="把好用的开源项目、设计资源收进素材库"
           action={<Button variant="link" className="text-[17px]" onClick={() => navigate({ to: '/assets/new' })}>新增素材</Button>} />
+      ) : filtered.length === 0 ? (
+        <EmptyState title="没有匹配的素材" desc="试试其他关键词或分类"
+          action={<Button variant="link" className="text-[17px]" onClick={clearFilters}>清除筛选</Button>} />
       ) : (
         <RowList>
           {filtered.map((a) => (
@@ -96,7 +113,8 @@ function AssetsPage() {
                     {copied === a.id ? <Check size={16} className="text-primary" /> : <Copy size={16} />}
                   </RowAction>
                 ) : null}
-                <RowAction title="收藏" onClick={() => toggleFav(a.id, a.is_favorite)}>
+                <RowAction title={a.is_favorite ? '取消收藏' : '收藏'} disabled={toggling.has(a.id)}
+                  onClick={() => toggleFav(a.id, a.is_favorite)}>
                   <Star size={16} className={a.is_favorite ? 'text-primary' : ''} fill={a.is_favorite ? 'currentColor' : 'none'} />
                 </RowAction>
                 <RowAction title="编辑" className="hidden sm:flex"
@@ -124,9 +142,17 @@ function AssetsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive"
-              onClick={() => delId && remove('assets', delId, [['assets']], {
-                optimistic: (old) => old.filter((x: any) => x.id !== delId),
-              }).then(() => setDelId(null))}>
+              onClick={async (event) => {
+                // AlertDialogAction 默认点击即关闭，先阻止；仅删除成功后关弹窗，失败时保留让用户重试
+                event.preventDefault();
+                const id = delId;
+                if (!id) return;
+                const ok = await remove('assets', id, [['assets']], {
+                  optimistic: (old) => old.filter((x: any) => x.id !== id),
+                  success: '已删除',
+                });
+                if (ok) setDelId(null);
+              }}>
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

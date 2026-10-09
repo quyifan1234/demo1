@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { useKeys, useApps, useKeyLinks, useMutate } from '../../lib/queries';
 import { PageHeader, EmptyState, MaskedKey, Highlight, QueryError, InitialAvatar } from '../../components/bits';
 import { CapsuleSearch, CategoryFilters, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
-import { toast } from 'sonner';
+import { copyText } from '../../lib/clipboard';
 
 export const Route = createFileRoute('/_app/keys')({
   component: KeysPage,
@@ -28,6 +28,8 @@ function KeysPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  // 正在切换启用状态的行 id：防重复点击、禁用开关
+  const [switching, setSwitching] = useState<Set<string>>(new Set());
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
   useEffect(() => {
@@ -44,6 +46,9 @@ function KeysPage() {
       return terms.every((t) => k.name.toLowerCase().includes(t) || (k.platform ?? '').toLowerCase().includes(t));
     });
   }, [keys, q, platform]);
+
+  // 一键清空筛选，回到完整列表
+  const clearFilters = () => { setQ(''); setPlatform('全部'); };
 
   const clearTimer = (id: string) => {
     const t = timers.current.get(id);
@@ -65,15 +70,22 @@ function KeysPage() {
   };
 
   const copy = async (id: string, value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success('已复制');
-    } catch {
-      toast.error('复制失败，请重试');
-      return;
-    }
+    // 复制成功才显示 ✓；降级与失败提示统一交给 copyText
+    if (!(await copyText(value, '已复制密钥'))) return;
     setCopied(id);
     setTimeout(() => setCopied((p) => (p === id ? null : p)), 1500);
+  };
+
+  const toggleActive = async (id: string, v: boolean) => {
+    if (switching.has(id)) return; // 请求未完成时禁止重复点击
+    const k = keys.find((x) => x.id === id);
+    if (!k) return;
+    setSwitching((s) => new Set(s).add(id));
+    // 乐观更新：开关立即翻转，失败时由 save 回滚并提示
+    await save('api_keys', { ...k, is_active: v }, [['keys']], {
+      optimistic: (old) => old.map((x) => (x.id === id ? { ...x, is_active: v } : x)),
+    });
+    setSwitching((s) => { const n = new Set(s); n.delete(id); return n; });
   };
 
   const appNames = (keyId: string) =>
@@ -95,9 +107,12 @@ function KeysPage() {
         <RowSkeleton rows={3} />
       ) : isError ? (
         <QueryError onRetry={() => refetch()} />
-      ) : filtered.length === 0 ? (
+      ) : keys.length === 0 ? (
         <EmptyState title="还没有密钥" desc="把各平台的 API Key 集中收好，需要时一键复制"
           action={<Button variant="link" className="text-[17px]" onClick={() => navigate({ to: '/keys/$keyId', params: { keyId: 'new' } })}>新增密钥</Button>} />
+      ) : filtered.length === 0 ? (
+        <EmptyState title="没有匹配的密钥" desc="试试其他关键词或分类"
+          action={<Button variant="link" className="text-[17px]" onClick={clearFilters}>清除筛选</Button>} />
       ) : (
         <RowList>
           {filtered.map((k) => (
@@ -117,17 +132,19 @@ function KeysPage() {
                 </div>
               </div>
               <div className="flex shrink-0 items-center justify-end gap-1">
-                <Switch checked={k.is_active} onCheckedChange={(v) => save('api_keys', { ...k, is_active: v }, [['keys']])} title={k.is_active ? '停用' : '启用'} />
+                <Switch checked={k.is_active} disabled={switching.has(k.id)}
+                  onCheckedChange={(v) => toggleActive(k.id, v)}
+                  aria-label={`${k.name} 启用状态`} title={k.is_active ? '停用' : '启用'} />
                 <RowAction title={revealed.includes(k.id) ? '隐藏' : '显示 15 秒'} onClick={() => onEye(k.id)}>
                   {revealed.includes(k.id) ? <EyeOff size={16} /> : <Eye size={16} />}
                 </RowAction>
                 <RowAction title="复制" onClick={() => copy(k.id, k.key_value)}>
                   {copied === k.id ? <Check size={16} className="text-primary" /> : <Copy size={16} />}
                 </RowAction>
-                <RowAction title="编辑" onClick={() => navigate({ to: '/keys/$keyId', params: { keyId: k.id } })}>
+                <RowAction title="编辑" className="hidden sm:flex" onClick={() => navigate({ to: '/keys/$keyId', params: { keyId: k.id } })}>
                   <Pencil size={16} />
                 </RowAction>
-                <RowAction title="删除" danger onClick={() => setDelId(k.id)}>
+                <RowAction title="删除" danger className="hidden sm:flex" onClick={() => setDelId(k.id)}>
                   <Trash2 size={16} />
                 </RowAction>
                 <Link to="/keys/$keyId" params={{ keyId: k.id }} aria-label="编辑密钥" className="hidden h-9 w-9 items-center justify-center sm:flex">
@@ -161,7 +178,13 @@ function KeysPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive"
-              onClick={() => delId && remove('api_keys', delId, [['keys'], ['keyLinks']]).then(() => setDelId(null))}>
+              onClick={async (event) => {
+                // AlertDialogAction 默认点击即关闭，先阻止；仅删除成功后关弹窗，失败时保留让用户重试
+                event.preventDefault();
+                if (!delId) return;
+                const ok = await remove('api_keys', delId, [['keys'], ['keyLinks']], { success: '已删除' });
+                if (ok) setDelId(null);
+              }}>
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

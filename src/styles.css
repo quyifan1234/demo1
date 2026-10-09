@@ -248,6 +248,8 @@
 .workspace-toolbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 73px; padding: 16px 36px; background: var(--background); border-bottom: 1px solid var(--border); }
 .toolbar-crumb { display: flex; align-items: center; gap: 10px; white-space: nowrap; font-size: 11px; }
 .toolbar-crumb a, .toolbar-crumb svg { color: var(--muted-foreground); }
+/* 面包屑末级（当前记录名）：弱化并限宽，长名称不挤掉右侧操作区 */
+.toolbar-crumb-tail { max-width: 24ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted-foreground); }
 .toolbar-actions { display: flex; align-items: center; gap: 20px; }
 .theme-switch { gap: 0; padding: 3px; border: 1px solid var(--border); border-radius: calc(var(--radius) + 3px); }
 .theme-switch button { height: 28px; gap: 6px; padding: 0 10px; border-radius: var(--radius); color: var(--muted-foreground); font-size: 11px; font-weight: 400; }

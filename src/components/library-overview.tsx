@@ -6,6 +6,7 @@ import { APP_CATEGORIES } from '../lib/types';
 import { isQuotaAlert, timeAgo } from '../lib/format';
 import { cn } from '../lib/utils';
 import { Highlight, InitialAvatar, QuotaBar } from './bits';
+import { useDocTitle } from '../lib/use-doc-title';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
@@ -21,6 +22,7 @@ interface LibraryOverviewProps {
 }
 
 export function LibraryOverview({ apps, assets, skills, keys, threshold, loading }: LibraryOverviewProps) {
+  useDocTitle('资料库');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('全部');
   const activeApps = apps.filter((app) => app.status !== '已弃用');

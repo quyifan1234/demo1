@@ -27,7 +27,9 @@ function AppsPage() {
   const [cat, setCat] = useState('全部');
   const [status, setStatus] = useState('全部');
   const [favOnly, setFavOnly] = useState(false);
-  const [sort, setSort] = useState(prefs?.default_sort ?? 'updated');
+  // prefs 异步到达、可能晚于首屏渲染；用 override 记录用户的显式选择，避免被后到的偏好覆盖
+  const [sortOverride, setSortOverride] = useState<string | null>(null);
+  const sort = sortOverride ?? prefs?.default_sort ?? 'updated';
   const [delId, setDelId] = useState<string | null>(null);
   // 正在切换收藏的行 id：防重复点击、显示等待态
   const [toggling, setToggling] = useState<Set<string>>(new Set());
@@ -52,6 +54,9 @@ function AppsPage() {
     };
     return [...list].sort(by[sort] ?? by.updated);
   }, [apps, q, cat, status, favOnly, sort]);
+
+  // 一键清空筛选，回到完整列表
+  const clearFilters = () => { setQ(''); setCat('全部'); setStatus('全部'); setFavOnly(false); };
 
   const toggleFav = async (id: string, v: boolean) => {
     if (toggling.has(id)) return; // 请求未完成时禁止重复点击
@@ -85,7 +90,7 @@ function AppsPage() {
             <SelectTrigger className="h-10 w-28 bg-card shadow-none"><SelectValue /></SelectTrigger>
             <SelectContent>{['全部', ...APP_STATUSES].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
           </Select>
-          <Select value={sort} onValueChange={setSort}>
+          <Select value={sort} onValueChange={setSortOverride}>
             <SelectTrigger className="h-10 w-32 bg-card shadow-none"><SelectValue /></SelectTrigger>
             <SelectContent>{SORTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
@@ -103,9 +108,12 @@ function AppsPage() {
         <RowSkeleton rows={4} />
       ) : isError ? (
         <QueryError onRetry={() => refetch()} />
-      ) : filtered.length === 0 ? (
-        <EmptyState title="没有匹配的应用" desc="换个关键词试试，或添加一个新的应用"
+      ) : apps.length === 0 ? (
+        <EmptyState title="还没有应用" desc="添加你常用的 AI 工具，名称、状态和额度一目了然"
           action={<Button variant="link" className="text-[17px]" onClick={() => navigate({ to: '/apps/new' })}>新增应用</Button>} />
+      ) : filtered.length === 0 ? (
+        <EmptyState title="没有匹配的应用" desc="试试其他关键词或分类"
+          action={<Button variant="link" className="text-[17px]" onClick={clearFilters}>清除筛选</Button>} />
       ) : (
         <RowList>
           {filtered.map((a) => (
@@ -161,7 +169,13 @@ function AppsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive"
-              onClick={() => delId && remove('ai_apps', delId, [['apps'], ['outputs']]).then(() => setDelId(null))}>
+              onClick={async (event) => {
+                // AlertDialogAction 默认点击即关闭，先阻止；仅删除成功后关弹窗，失败时保留让用户重试
+                event.preventDefault();
+                if (!delId) return;
+                const ok = await remove('ai_apps', delId, [['apps'], ['outputs']], { success: '已删除' });
+                if (ok) setDelId(null);
+              }}>
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

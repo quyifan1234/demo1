@@ -3,6 +3,7 @@ import { cn } from '../lib/utils';
 import { coverClass, firstChar } from '../lib/covers';
 import { isQuotaAlert, maskKey, quotaPct } from '../lib/format';
 import { Button } from './ui/button';
+import { useDocTitle } from '../lib/use-doc-title';
 
 export function InitialAvatar({ name, size = 40 }: { name: string; size?: number }) {
   const ch = firstChar(name);
@@ -115,6 +116,8 @@ export function MaskedKey({ value, revealed }: { value: string; revealed: boolea
 
 export function PageHeader({ title, desc, action }: { title: string; desc?: string; action?: React.ReactNode }) {
   // 大标题随主题切换字体，长描述允许自然换行。
+  // 顺带把页面标题写进浏览器标签页，多开标签时能一眼分辨。
+  useDocTitle(title);
   return (
     <div className="page-header">
       <div className="min-w-0">

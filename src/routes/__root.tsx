@@ -22,7 +22,8 @@ function RootComponent() {
       <ThemeProvider>
         <AuthProvider>
           <Outlet />
-          <Toaster />
+          {/* mobileOffset：移动端把 toast 抬到底部 Tab 栏之上，避免遮住导航 */}
+          <Toaster position="bottom-right" mobileOffset={{ bottom: 84 }} />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
