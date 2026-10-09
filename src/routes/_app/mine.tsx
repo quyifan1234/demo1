@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { LogOut } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -35,6 +35,7 @@ function MinePage() {
   const [sort, setSort] = useState(prefs?.default_sort ?? 'updated');
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const saveAll = async () => {
     setBusy(true);
@@ -44,7 +45,11 @@ function MinePage() {
       await save('user_prefs', { user_id: user?.id, quota_threshold: Number(threshold) || 20, default_sort: sort },
         [['prefs']], { isNew: !prefs, keyCol: 'user_id' });
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+      savedTimeoutRef.current = setTimeout(() => {
+        setSaved(false);
+        savedTimeoutRef.current = null;
+      }, 2000);
     } finally {
       setBusy(false);
     }
