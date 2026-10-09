@@ -32,7 +32,7 @@ export function AppForm({ initial, onSubmit, busy, submitLabel }: {
   const [v, setV] = useState(initial);
   const [tag, setTag] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
-  const set = (k: keyof AppFormValue, val: unknown) => setV((p) => ({ ...p, [k]: val }));
+  const set = <K extends keyof AppFormValue>(k: K, val: AppFormValue[K]) => setV((p) => ({ ...p, [k]: val }));
 
   const submit = async () => {
     const errs: string[] = [];

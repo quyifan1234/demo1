@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { useAssets, useMutate } from '../../lib/queries';
 import { InitialAvatar, DetailSkeleton } from '../../components/bits';
+import type { Asset } from '../../lib/types';
 
 export const Route = createFileRoute('/_app/assets/$assetId')({
   component: AssetDetail,
@@ -27,8 +28,8 @@ function AssetDetail() {
   if (!asset) return <p className="text-muted-foreground text-sm">素材不存在或已被删除</p>;
 
   const toggleFav = async () => {
-    await save('assets', { ...asset, is_favorite: !asset.is_favorite }, [['assets']], {
-      optimistic: (old) => old.map((x: any) => x.id === assetId ? { ...x, is_favorite: !asset.is_favorite } : x),
+    await save<Asset>('assets', { ...asset, is_favorite: !asset.is_favorite }, [['assets']], {
+      optimistic: (old) => old.map((x: Asset) => x.id === assetId ? { ...x, is_favorite: !asset.is_favorite } : x),
     });
   };
 
@@ -101,8 +102,8 @@ function AssetDetail() {
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive"
               onClick={async () => {
-                await remove('assets', assetId, [['assets']], {
-                  optimistic: (old) => old.filter((x: any) => x.id !== assetId),
+                await remove<Asset>('assets', assetId, [['assets']], {
+                  optimistic: (old) => old.filter((x: Asset) => x.id !== assetId),
                 });
                 navigate({ to: '/assets' });
               }}>

@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useAssets, useMutate } from '../../lib/queries';
 import { PageHeader, DetailSkeleton } from '../../components/bits';
 import { AssetForm, toAssetFormValue, type AssetFormValue } from '../../components/asset-form';
+import type { Asset } from '../../lib/types';
 
 export const Route = createFileRoute('/_app/assets/$assetId/edit')({
   component: EditAsset,
@@ -30,8 +31,8 @@ function EditAsset() {
         is_favorite: v.is_favorite,
       };
       // 乐观更新：保存前先把新值写入缓存，详情页挂载即得新值，不闪现旧标题
-      await save('assets', { ...asset, ...patch }, [['assets']], {
-        optimistic: (old) => old.map((x: any) => (x.id === assetId ? { ...x, ...patch } : x)),
+      await save<Asset>('assets', { ...asset, ...patch }, [['assets']], {
+        optimistic: (old) => old.map((x: Asset) => (x.id === assetId ? { ...x, ...patch } : x)),
       });
       navigate({ to: '/assets/$assetId', params: { assetId } });
     } finally {

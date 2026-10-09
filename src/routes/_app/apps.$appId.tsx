@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { useApps, useKeys, useSkills, useOutputs, useKeyLinks, useSkillLinks, usePrefs, useMutate } from '../../lib/queries';
-import { OUTPUT_KINDS } from '../../lib/types';
+import { OUTPUT_KINDS, type AiApp } from '../../lib/types';
 import { fmtDate } from '../../lib/format';
 import { InitialAvatar, QuotaBar, Stars, EmptyState, DetailSkeleton } from '../../components/bits';
 import { RowList, RowChevron, SectionTitle, RowAction } from '../../components/rows';
@@ -49,13 +49,13 @@ function AppDetail() {
   const appOutputs = outputs.filter((o) => o.app_id === appId);
 
   const updateQuota = async (remaining: number | null, total?: number | null) => {
-    await save('ai_apps', {
+    await save<AiApp>('ai_apps', {
       ...app,
       quota_remaining: remaining,
       quota_total: total ?? app.quota_total,
       quota_updated_at: new Date().toISOString(),
     }, [['apps']], {
-      optimistic: (old) => old.map((a: any) => a.id === appId
+      optimistic: (old) => old.map((a: AiApp) => a.id === appId
         ? { ...a, quota_remaining: remaining, quota_total: total ?? a.quota_total, quota_updated_at: new Date().toISOString() }
         : a),
     });
@@ -235,7 +235,7 @@ function AppDetail() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive"
-              onClick={async () => { await remove('ai_apps', appId, [['apps'], ['outputs']], { optimistic: (old) => old.filter((a: any) => a.id !== appId) }); navigate({ to: '/apps' }); }}>
+              onClick={async () => { await remove<AiApp>('ai_apps', appId, [['apps'], ['outputs']], { optimistic: (old) => old.filter((a: AiApp) => a.id !== appId) }); navigate({ to: '/apps' }); }}>
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -4,7 +4,7 @@ import { Plus, Star, Pencil, Trash2, Copy, Check } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { useAssets, useMutate } from '../../lib/queries';
-import { ASSET_CATEGORIES } from '../../lib/types';
+import { ASSET_CATEGORIES, type Asset } from '../../lib/types';
 import { PageHeader, EmptyState, Highlight, QueryError, InitialAvatar } from '../../components/bits';
 import { CapsuleSearch, FilterChip, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
 
@@ -128,8 +128,8 @@ function AssetsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive"
-              onClick={() => delId && remove('assets', delId, [['assets']], {
-                optimistic: (old) => old.filter((x: any) => x.id !== delId),
+              onClick={() => delId && remove<Asset>('assets', delId, [['assets']], {
+                optimistic: (old) => old.filter((x: Asset) => x.id !== delId),
               }).then(() => setDelId(null))}>
               删除
             </AlertDialogAction>

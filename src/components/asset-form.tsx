@@ -28,7 +28,7 @@ export function AssetForm({ initial, onSubmit, busy, submitLabel }: {
   const [v, setV] = useState(initial);
   const [tag, setTag] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
-  const set = (k: keyof AssetFormValue, val: unknown) => setV((p) => ({ ...p, [k]: val }));
+  const set = <K extends keyof AssetFormValue>(k: K, val: AssetFormValue[K]) => setV((p) => ({ ...p, [k]: val }));
 
   const submit = async () => {
     const errs: string[] = [];

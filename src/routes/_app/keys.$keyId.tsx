@@ -8,6 +8,7 @@ import { Textarea } from '../../components/ui/textarea';
 import { Switch } from '../../components/ui/switch';
 import { useKeys, useApps, useKeyLinks, useMutate, replaceLinks } from '../../lib/queries';
 import { PageHeader, RequiredMark, DetailSkeleton } from '../../components/bits';
+import type { ApiKey } from '../../lib/types';
 
 export const Route = createFileRoute('/_app/keys/$keyId')({
   component: KeyDetail,
@@ -63,9 +64,9 @@ function KeyDetail() {
       };
       const savedId = isNew ? crypto.randomUUID() : keyId;
       // 乐观更新：编辑场景先把新值写入缓存，返回列表即得新值，不闪现旧内容
-      await save('api_keys', isNew ? { ...row, id: savedId } : { ...key, ...row }, [['keys']], {
+      await save<ApiKey>('api_keys', isNew ? { ...row, id: savedId } : { ...key, ...row }, [['keys']], {
         isNew,
-        optimistic: (old) => old.map((k: any) => (k.id === keyId ? { ...k, ...row } : k)),
+        optimistic: (old) => old.map((k: ApiKey) => (k.id === keyId ? { ...k, ...row } : k)),
       });
       await replaceLinks('app_key_links', 'key_id', savedId, curApps);
       invalidate([['keyLinks']]);
