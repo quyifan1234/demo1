@@ -12,6 +12,20 @@ pnpm dev
 
 开发服务器端口：**3015**（`http://localhost:3015`）
 
+## 本地预览与演示模式
+
+开发服务器默认渲染真实登录页（需要云端账号，注册需要邀请码）。若只想浏览页面，可以打开演示模式：
+
+- **进入**：在登录页点击「进入演示模式」；或先在浏览器控制台执行
+  `localStorage.setItem('si-preview-demo', '1')` 再刷新页面。
+- **效果**：总览 / 应用 / 素材 / 技能 / 密钥 / 我的 / 各详情页均以本地示例数据渲染，
+  新增、编辑、删除都可操作，数据只存在内存中，刷新即还原；顶栏会显示「演示模式 · 示例数据」。
+- **退出**：「我的」页底部点「退出登录」，或在控制台执行
+  `localStorage.removeItem('si-preview-demo')` 再刷新。
+- **不影响生产**：整个模式由 `import.meta.env.DEV` 守卫，`pnpm build` 产物中
+  `isPreviewDemoEnabled()` 恒为 `false`，登录页也不会渲染演示入口。
+- **相关代码**：`src/lib/preview-demo.ts`（开关 + 示例数据）、`src/lib/auth.tsx`、`src/lib/queries.ts`。
+
 ## 开发约束
 
 - **技术栈**：react + vite，不要更换框架或构建工具（如切换为 Angular / Svelte），否则导入时会被拒绝
