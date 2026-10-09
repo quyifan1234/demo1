@@ -23,8 +23,16 @@ interface LibraryOverviewProps {
 export function LibraryOverview({ apps, assets, skills, keys, threshold, loading }: LibraryOverviewProps) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('全部');
-  const activeApps = apps.filter((app) => app.status !== '已弃用');
-  const alerts = activeApps.filter((app) => isQuotaAlert(app.quota_remaining, app.quota_total, threshold));
+
+  // Performance optimization: Memoize active apps to avoid re-filtering apps on every render pass
+  const activeApps = useMemo(() => apps.filter((app) => app.status !== '已弃用'), [apps]);
+
+  // Performance optimization: Memoize alert apps calculation to avoid re-evaluating quota thresholds
+  const alerts = useMemo(
+    () => activeApps.filter((app) => isQuotaAlert(app.quota_remaining, app.quota_total, threshold)),
+    [activeApps, threshold],
+  );
+
   const total = apps.length + assets.length + skills.length + keys.length;
   const stats = [
     { label: '应用', count: apps.length, to: '/apps', Icon: Layers },
@@ -38,10 +46,24 @@ export function LibraryOverview({ apps, assets, skills, keys, threshold, loading
     ...skills.map((skill) => ({ name: skill.name, kind: '技能', updated: skill.updated_at, path: `/skills/${skill.id}` })),
     ...keys.map((key) => ({ name: key.name, kind: '密钥', updated: key.updated_at, path: `/keys/${key.id}` })),
   ].sort((a, b) => b.updated.localeCompare(a.updated)).slice(0, 6), [apps, assets, skills, keys]);
-  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const filtered = activeApps.filter((app) => (category === '全部' || app.category === category)
-    && terms.every((term) => [app.name, app.description ?? '', app.category, app.specialties.join(' ')].join(' ').toLowerCase().includes(term)))
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+
+  // Performance optimization: Memoize search terms parsing to avoid string splits on unchanged queries
+  const terms = useMemo(() => query.trim().toLowerCase().split(/\s+/).filter(Boolean), [query]);
+
+  // Performance optimization: Memoize app filtering & sorting to prevent O(N) operations during unrelated re-renders
+  const filtered = useMemo(
+    () =>
+      activeApps
+        .filter(
+          (app) =>
+            (category === '全部' || app.category === category) &&
+            terms.every((term) =>
+              [app.name, app.description ?? '', app.category, app.specialties.join(' ')].join(' ').toLowerCase().includes(term),
+            ),
+        )
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
+    [activeApps, category, terms],
+  );
 
   return (
     <div className="library-overview">
