@@ -97,7 +97,7 @@ export function AppForm({ initial, onSubmit, busy, submitLabel }: {
           <div className="flex gap-2 flex-wrap mt-2">
             {v.specialties.map((t) => (
               <Badge key={t} variant="secondary" className="gap-1">{t}
-                <button type="button" aria-label="Remove tag" onClick={() => set('specialties', v.specialties.filter((x) => x !== t))}><X size={12} /></button>
+                <button type="button" aria-label={`移除擅长领域 ${t}`} onClick={() => set('specialties', v.specialties.filter((x) => x !== t))}><X size={12} /></button>
               </Badge>
             ))}
           </div>
