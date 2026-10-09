@@ -113,7 +113,9 @@ export function useMutate() {
 export async function replaceLinks(table: 'app_key_links' | 'skill_app_links', col: 'key_id' | 'skill_id', appId: string, ids: string[]) {
   try {
     const userId = await uid();
-    await supabase.from(table).delete().eq('app_id', appId);
+    // 删除失败必须中止：否则会在残留的旧关联上再插入，产生重复行
+    const { error: deleteError } = await supabase.from(table).delete().eq('app_id', appId);
+    if (deleteError) throw new Error(deleteError.message);
     if (ids.length === 0) return true;
     const { error } = await supabase.from(table).insert(ids.map((id) => ({ user_id: userId, app_id: appId, [col]: id })));
     if (error) throw new Error(error.message);

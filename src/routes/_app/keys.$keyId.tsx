@@ -87,7 +87,8 @@ function KeyDetail() {
       });
       // 失败时 toast 已提示：保留输入、停在表单，不跳转
       if (!ok) return;
-      await replaceLinks('app_key_links', 'key_id', savedId, curApps);
+      // 关联是先删后插：insert 失败时旧关联已经没了，此时必须留在表单让用户重试
+      if (!(await replaceLinks('app_key_links', 'key_id', savedId, curApps))) return;
       invalidate([['keyLinks']]);
       clearDirty();
       navigate({ to: '/keys' });

@@ -65,7 +65,8 @@ function MinePage() {
       // 两个写操作都返回 boolean：失败时 toast 已提示，这里只决定要不要显示「已保存」
       const profileOk = await save('profiles', { id: user?.id, nickname: nickname.trim() || null, bio: bio.trim() || null },
         [['profile']], { isNew: !profile, skipUserId: true, errorMessage: '个人资料保存失败，请稍后重试' });
-      const prefsOk = profileOk && await save('user_prefs', { user_id: user?.id, quota_threshold: Number(threshold) || 20, default_sort: sort },
+      // 两个写操作各自尝试：任一失败都会提示，且不显示「已保存」
+      const prefsOk = await save('user_prefs', { user_id: user?.id, quota_threshold: Number(threshold) || 20, default_sort: sort },
         [['prefs']], { isNew: !prefs, keyCol: 'user_id', errorMessage: '偏好设置保存失败，请稍后重试' });
       if (!profileOk || !prefsOk) return;
       setSaved(true);

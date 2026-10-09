@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import { useApps, usePrefs, useMutate } from '../../lib/queries';
 import { APP_CATEGORIES, APP_STATUSES, SORTS } from '../../lib/types';
-import { toast } from 'sonner';
 import { isQuotaAlert } from '../../lib/format';
 import { InitialAvatar, PageHeader, QuotaBar, EmptyState, Highlight, QueryError } from '../../components/bits';
 import { CapsuleSearch, CategoryFilters, FilterChip, RowList, RowChevron, RowAction, RowSkeleton } from '../../components/rows';
@@ -22,7 +21,7 @@ function AppsPage() {
   const isList = matchRoute({ to: '/apps', fuzzy: false });
   const { data: apps = [], isLoading, isError, refetch } = useApps();
   const { data: prefs } = usePrefs();
-  const { save, remove, invalidate } = useMutate();
+  const { save, remove } = useMutate();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('全部');
   const [status, setStatus] = useState('全部');
@@ -63,17 +62,12 @@ function AppsPage() {
     const app = apps.find((a) => a.id === id);
     if (!app) return;
     setToggling((s) => new Set(s).add(id));
-    try {
-      // 乐观更新：星标立即翻转，失败时回滚并提示
-      await save('ai_apps', { ...app, is_favorite: !v }, [['apps']], {
-        optimistic: (old) => old.map((a) => (a.id === id ? { ...a, is_favorite: !v } : a)),
-      });
-    } catch (e) {
-      invalidate([['apps']]);
-      toast.error(e instanceof Error ? e.message : '收藏失败，请重试');
-    } finally {
-      setToggling((s) => { const n = new Set(s); n.delete(id); return n; });
-    }
+    // 乐观更新：星标立即翻转；失败时 save 内部会回滚缓存并提示，这里不需要 try/catch
+    await save('ai_apps', { ...app, is_favorite: !v }, [['apps']], {
+      optimistic: (old) => old.map((a) => (a.id === id ? { ...a, is_favorite: !v } : a)),
+      errorMessage: '收藏失败，请重试',
+    });
+    setToggling((s) => { const n = new Set(s); n.delete(id); return n; });
   };
 
   if (!isList) return <Outlet />;

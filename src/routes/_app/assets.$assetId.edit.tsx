@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useAssets, useMutate } from '../../lib/queries';
-import { PageHeader, DetailSkeleton } from '../../components/bits';
+import { PageHeader, DetailSkeleton, EmptyState } from '../../components/bits';
+import { Button } from '../../components/ui/button';
 import { AssetForm, toAssetFormValue, type AssetFormValue } from '../../components/asset-form';
 import { UnsavedGuardDialog, useUnsavedGuard } from '../../components/unsaved-guard';
 
@@ -21,7 +22,10 @@ function EditAsset() {
   const asset = assets.find((a) => a.id === assetId);
   // 加载门控：数据就绪前只渲染骨架，绝不先渲染"不存在"（修复 reload 闪现 bug）
   if (assetsLoading) return <DetailSkeleton />;
-  if (!asset) return <p className="text-muted-foreground text-sm">素材不存在</p>;
+  if (!asset) return (
+    <EmptyState title="素材不存在或已被删除" desc="它可能已被删除，或者链接已经失效"
+      action={<Button variant="link" className="text-[17px]" onClick={() => navigate({ to: '/assets' })}>返回素材库</Button>} />
+  );
 
   const submit = async (v: AssetFormValue) => {
     setBusy(true);

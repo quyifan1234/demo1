@@ -16,9 +16,9 @@ import { UnsavedGuardDialog, useUnsavedGuard } from '../../components/unsaved-gu
 
 export const Route = createFileRoute('/_app/skills/$skillId')({
   // ?edit=1：列表页的「编辑」直接进入编辑态，不必先进详情再点编辑
-  validateSearch: (search: Record<string, unknown>): { edit?: boolean } => ({
-    edit: search.edit === true || search.edit === '1' || search.edit === 1,
-  }),
+  // 非编辑态不写 edit 字段，避免 URL 里残留 ?edit=false
+  validateSearch: (search: Record<string, unknown>): { edit?: boolean } =>
+    (search.edit === true || search.edit === '1' || search.edit === 1 ? { edit: true } : {}),
   component: SkillDetail,
 });
 
@@ -91,7 +91,9 @@ function SkillDetail() {
       });
       // 失败时 toast 已提示，这里保留用户输入、停在表单，不跳转
       if (!ok) return;
-      await replaceLinks('skill_app_links', 'skill_id', savedId, curApps);
+      // 关联是先删后插：insert 失败时旧关联已经没了，此时必须留在表单让用户重试，
+      // 不能清掉未保存标记后直接跳走（用户会以为保存成功了）
+      if (!(await replaceLinks('skill_app_links', 'skill_id', savedId, curApps))) return;
       invalidate([['skillLinks']]);
       clearDirty();
       if (isNew) {
@@ -115,6 +117,8 @@ function SkillDetail() {
       setContent(skill.content ?? '');
       setTags(skill.tags ?? []);
     }
+    // 关联选择也要一起回滚，否则「取消」后再进编辑会把之前取消的勾选写进库
+    setSelApps(null);
     setError(null);
     clearDirty();
     setEditing(false);
@@ -164,7 +168,9 @@ function SkillDetail() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="skill-category">分类</Label>
-                <Select value={category} onValueChange={setCategory}>
+                {/* Radix Select 只在 <form> 内才派发原生 change，这里的页面没有 form，
+                    所以必须显式 markDirty，否则只改分类再返回会静默丢失改动 */}
+                <Select value={category} onValueChange={(value) => { setCategory(value); markDirty(); }}>
                   <SelectTrigger id="skill-category"><SelectValue /></SelectTrigger>
                   <SelectContent>{SKILL_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                 </Select>

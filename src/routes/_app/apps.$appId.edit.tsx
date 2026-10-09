@@ -3,7 +3,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { Label } from '../../components/ui/label';
 import { useApps, useKeys, useSkills, useKeyLinks, useSkillLinks, useMutate, replaceLinks } from '../../lib/queries';
-import { PageHeader, DetailSkeleton } from '../../components/bits';
+import { PageHeader, DetailSkeleton, EmptyState } from '../../components/bits';
+import { Button } from '../../components/ui/button';
 import { AppForm, toFormValue, type AppFormValue } from '../../components/app-form';
 import { UnsavedGuardDialog, useUnsavedGuard } from '../../components/unsaved-guard';
 
@@ -29,7 +30,10 @@ function EditApp() {
   const app = apps.find((a) => a.id === appId);
   // 加载门控：数据就绪前只渲染骨架，绝不先渲染"不存在"（修复 reload 闪现 bug）
   if (appsLoading) return <DetailSkeleton />;
-  if (!app) return <p className="text-muted-foreground text-sm">应用不存在</p>;
+  if (!app) return (
+    <EmptyState title="应用不存在或已被删除" desc="它可能已被删除，或者链接已经失效"
+      action={<Button variant="link" className="text-[17px]" onClick={() => navigate({ to: '/apps' })}>返回应用列表</Button>} />
+  );
 
   const curKeys = selKeys ?? keyLinks.filter((l) => l.app_id === appId).map((l) => l.key_id);
   const curSkills = selSkills ?? skillLinks.filter((l) => l.app_id === appId).map((l) => l.skill_id);

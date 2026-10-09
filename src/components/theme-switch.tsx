@@ -39,7 +39,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.classList.toggle('dark', theme === 'dark');
     document.documentElement.style.colorScheme = theme === 'dark' ? 'dark' : 'light';
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEMES.find((item) => item.value === theme)!.color);
+    const color = THEMES.find((item) => item.value === theme)!.color;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+    // 与 index.html 预置脚本保持一致：html 画布的内联底色也要跟着换，
+    // 否则短页面/回弹时可能露出上一次主题的色带
+    document.documentElement.style.backgroundColor = color;
     try {
       localStorage.setItem(STORAGE_KEY, theme);
     } catch {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, Outlet, useMatchRoute, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Pencil, Trash2, Plus, ExternalLink, Star } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -23,6 +23,9 @@ export const Route = createFileRoute('/_app/apps/$appId')({
 function AppDetail() {
   const { appId } = Route.useParams();
   const navigate = useNavigate();
+  const matchRoute = useMatchRoute();
+  // 子路由（/apps/$appId/edit）是详情页的子路由：不渲染 Outlet 的话编辑页永远不会挂载
+  const isDetail = matchRoute({ to: '/apps/$appId', params: { appId }, fuzzy: false });
   const { data: apps = [], isLoading: appsLoading } = useApps();
   const { data: keys = [] } = useKeys();
   const { data: skills = [] } = useSkills();
@@ -45,6 +48,7 @@ function AppDetail() {
   const app = apps.find((a) => a.id === appId);
   // 浏览器标签页跟随当前应用，多开标签时能一眼分辨（必须在提前 return 之前调用）
   useDocTitle(app?.name);
+  if (!isDetail) return <Outlet />;
   // 加载门控：数据就绪前只渲染骨架，绝不先渲染"不存在"（修复 reload 闪现 bug）
   if (appsLoading) return <DetailSkeleton />;
   if (!app) return (
@@ -273,7 +277,11 @@ function AppDetail() {
             <AlertDialogDescription>将剩余额度恢复为总额度（{app.quota_total ?? '未设置'} {app.quota_unit}）。</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={() => updateQuota(app.quota_total, undefined, '已恢复满额')}>恢复满额</AlertDialogAction>
+            <AlertDialogAction onClick={async (event) => {
+              // 失败时保持弹窗打开，用户可以重试（成功/失败都有 toast）
+              event.preventDefault();
+              if (await updateQuota(app.quota_total, undefined, '已恢复满额')) setResetOpen(false);
+            }}>恢复满额</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

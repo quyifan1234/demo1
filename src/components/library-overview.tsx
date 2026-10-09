@@ -29,7 +29,8 @@ export function LibraryOverview({ apps, assets, skills, keys, threshold, loading
   const alerts = activeApps.filter((app) => isQuotaAlert(app.quota_remaining, app.quota_total, threshold));
   const total = apps.length + assets.length + skills.length + keys.length;
   const stats = [
-    { label: '应用', count: apps.length, to: '/apps', Icon: Layers },
+    // 台账与侧栏都默认不显示「已弃用」，这里的数字也要一致，避免同页出现两个「应用数」
+    { label: '应用', count: activeApps.length, to: '/apps', Icon: Layers },
     { label: '素材', count: assets.length, to: '/assets', Icon: FolderOpen },
     { label: '技能', count: skills.length, to: '/skills', Icon: Sparkles },
     { label: '密钥', count: keys.length, to: '/keys', Icon: KeyRound },
