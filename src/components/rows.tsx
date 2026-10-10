@@ -1,6 +1,7 @@
 import { Search, ChevronRight } from 'lucide-react';
 import { Input } from './ui/input';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { cn } from '../lib/utils';
 
 /**
@@ -97,19 +98,27 @@ export function RowAction({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      title={title}
-      aria-label={title}
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'row-action',
-        danger && 'is-danger',
-        className,
-      )}
-    >
-      {children}
-    </button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            aria-label={title}
+            onClick={onClick}
+            disabled={disabled}
+            className={cn(
+              'row-action',
+              danger && 'is-danger',
+              className,
+            )}
+          >
+            {children}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p>{title}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
