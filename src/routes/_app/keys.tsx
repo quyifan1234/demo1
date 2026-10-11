@@ -117,7 +117,7 @@ function KeysPage() {
                 </div>
               </div>
               <div className="flex shrink-0 items-center justify-end gap-1">
-                <Switch checked={k.is_active} onCheckedChange={(v) => save('api_keys', { ...k, is_active: v }, [['keys']])} title={k.is_active ? '停用' : '启用'} />
+                <Switch checked={k.is_active} onCheckedChange={(v) => save('api_keys', { ...k, is_active: v }, [['keys']])} title={k.is_active ? '停用' : '启用'} aria-label={k.is_active ? `停用密钥 ${k.name}` : `启用密钥 ${k.name}`} />
                 <RowAction title={revealed.includes(k.id) ? '隐藏' : '显示 15 秒'} onClick={() => onEye(k.id)}>
                   {revealed.includes(k.id) ? <EyeOff size={16} /> : <Eye size={16} />}
                 </RowAction>
