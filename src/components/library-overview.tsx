@@ -23,8 +23,15 @@ interface LibraryOverviewProps {
 export function LibraryOverview({ apps, assets, skills, keys, threshold, loading }: LibraryOverviewProps) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('全部');
-  const activeApps = apps.filter((app) => app.status !== '已弃用');
-  const alerts = activeApps.filter((app) => isQuotaAlert(app.quota_remaining, app.quota_total, threshold));
+  // ⚡ Performance optimization: Memoize active apps list to avoid re-filtering on every render/keystroke
+  const activeApps = useMemo(() => apps.filter((app) => app.status !== '已弃用'), [apps]);
+
+  // ⚡ Performance optimization: Memoize quota low alerts
+  const alerts = useMemo(
+    () => activeApps.filter((app) => isQuotaAlert(app.quota_remaining, app.quota_total, threshold)),
+    [activeApps, threshold]
+  );
+
   const total = apps.length + assets.length + skills.length + keys.length;
   const stats = [
     { label: '应用', count: apps.length, to: '/apps', Icon: Layers },
@@ -38,10 +45,29 @@ export function LibraryOverview({ apps, assets, skills, keys, threshold, loading
     ...skills.map((skill) => ({ name: skill.name, kind: '技能', updated: skill.updated_at, path: `/skills/${skill.id}` })),
     ...keys.map((key) => ({ name: key.name, kind: '密钥', updated: key.updated_at, path: `/keys/${key.id}` })),
   ].sort((a, b) => b.updated.localeCompare(a.updated)).slice(0, 6), [apps, assets, skills, keys]);
-  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const filtered = activeApps.filter((app) => (category === '全部' || app.category === category)
-    && terms.every((term) => [app.name, app.description ?? '', app.category, app.specialties.join(' ')].join(' ').toLowerCase().includes(term)))
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+
+  // ⚡ Performance optimization: Compute category counts in a single O(N) pass, enabling O(1) count lookup in rendering
+  const { availableCategories, categoryCounts } = useMemo(() => {
+    const counts: Record<string, number> = { '全部': activeApps.length };
+    for (const app of activeApps) {
+      counts[app.category] = (counts[app.category] ?? 0) + 1;
+    }
+    const available = ['全部', ...APP_CATEGORIES.filter((cat) => (counts[cat] ?? 0) > 0)];
+    return { availableCategories: available, categoryCounts: counts };
+  }, [activeApps]);
+
+  // ⚡ Performance optimization: Memoize filtered and sorted apps to avoid redundant string joins and array iterations on unrelated re-renders
+  const filtered = useMemo(() => {
+    const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return activeApps
+      .filter((app) => {
+        if (category !== '全部' && app.category !== category) return false;
+        if (terms.length === 0) return true;
+        const searchable = `${app.name} ${app.description ?? ''} ${app.category} ${app.specialties.join(' ')}`.toLowerCase();
+        return terms.every((term) => searchable.includes(term));
+      })
+      .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  }, [activeApps, category, query]);
 
   return (
     <div className="library-overview">
@@ -91,8 +117,8 @@ export function LibraryOverview({ apps, assets, skills, keys, threshold, loading
         <div className="overview-section-head"><h2 id="registry-title">应用台账</h2><Link to="/apps">查看全部 <ArrowRight size={13} aria-hidden="true" /></Link></div>
         <div className="registry-toolbar">
           <ToggleGroup type="single" value={category} onValueChange={(value) => value && setCategory(value)} className="category-toggles" aria-label="应用分类">
-            {['全部', ...APP_CATEGORIES.filter((item) => activeApps.some((app) => app.category === item))].map((item) => (
-              <ToggleGroupItem key={item} value={item}>{item}<span className="tabular-nums">{item === '全部' ? activeApps.length : activeApps.filter((app) => app.category === item).length}</span></ToggleGroupItem>
+            {availableCategories.map((item) => (
+              <ToggleGroupItem key={item} value={item}>{item}<span className="tabular-nums">{categoryCounts[item] ?? 0}</span></ToggleGroupItem>
             ))}
           </ToggleGroup>
           <div className="registry-search"><Search size={14} aria-hidden="true" /><Input aria-label="搜索应用台账" type="search" placeholder="搜索应用、描述或擅长领域…" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
