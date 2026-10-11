@@ -31,7 +31,7 @@ export function MobileNav() {
                 active ? 'text-primary' : 'text-muted-foreground',
               )}
             >
-              <Icon size={22} strokeWidth={active ? 2.2 : 1.8} />
+              <Icon size={22} strokeWidth={active ? 2.2 : 1.8} aria-hidden="true" />
               <span className="text-[10px] font-medium truncate max-w-full">{label}</span>
             </Link>
           );

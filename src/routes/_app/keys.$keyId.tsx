@@ -102,7 +102,7 @@ function KeyDetail() {
             <Input type={show ? 'text' : 'password'} value={value} onChange={(e) => setValue(e.target.value)}
               placeholder="粘贴密钥" className="pr-10 font-mono" />
             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-              onClick={() => setShow(!show)} title={show ? '隐藏' : '显示'}>
+              onClick={() => setShow(!show)} title={show ? '隐藏' : '显示'} aria-label={show ? '隐藏密钥内容' : '显示密钥内容'}>
               {show ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
@@ -124,8 +124,8 @@ function KeyDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Switch checked={active} onCheckedChange={setActive} />
-          <Label>启用</Label>
+          <Switch id="key-active" checked={active} onCheckedChange={setActive} />
+          <Label htmlFor="key-active">启用</Label>
         </div>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <Button disabled={busy} onClick={submit} className="min-w-28 rounded-full shadow-none">{busy ? '保存中…' : '保存'}</Button>
