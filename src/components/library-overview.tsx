@@ -23,25 +23,49 @@ interface LibraryOverviewProps {
 export function LibraryOverview({ apps, assets, skills, keys, threshold, loading }: LibraryOverviewProps) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('全部');
-  const activeApps = apps.filter((app) => app.status !== '已弃用');
-  const alerts = activeApps.filter((app) => isQuotaAlert(app.quota_remaining, app.quota_total, threshold));
+
+  // Memoize active apps list to prevent re-filtering on every render
+  const activeApps = useMemo(() => apps.filter((app) => app.status !== '已弃用'), [apps]);
+
+  // Memoize quota alerts calculation based on active apps and threshold
+  const alerts = useMemo(
+    () => activeApps.filter((app) => isQuotaAlert(app.quota_remaining, app.quota_total, threshold)),
+    [activeApps, threshold],
+  );
+
   const total = apps.length + assets.length + skills.length + keys.length;
-  const stats = [
-    { label: '应用', count: apps.length, to: '/apps', Icon: Layers },
-    { label: '素材', count: assets.length, to: '/assets', Icon: FolderOpen },
-    { label: '技能', count: skills.length, to: '/skills', Icon: Sparkles },
-    { label: '密钥', count: keys.length, to: '/keys', Icon: KeyRound },
-  ];
+
+  // Memoize stat cards array structure to avoid object allocations on re-renders
+  const stats = useMemo(
+    () => [
+      { label: '应用', count: apps.length, to: '/apps', Icon: Layers },
+      { label: '素材', count: assets.length, to: '/assets', Icon: FolderOpen },
+      { label: '技能', count: skills.length, to: '/skills', Icon: Sparkles },
+      { label: '密钥', count: keys.length, to: '/keys', Icon: KeyRound },
+    ],
+    [apps.length, assets.length, skills.length, keys.length],
+  );
+
   const recent = useMemo(() => [
     ...apps.map((app) => ({ name: app.name, kind: '应用', updated: app.updated_at, path: `/apps/${app.id}` })),
     ...assets.map((asset) => ({ name: asset.name, kind: '素材', updated: asset.updated_at, path: `/assets/${asset.id}` })),
     ...skills.map((skill) => ({ name: skill.name, kind: '技能', updated: skill.updated_at, path: `/skills/${skill.id}` })),
     ...keys.map((key) => ({ name: key.name, kind: '密钥', updated: key.updated_at, path: `/keys/${key.id}` })),
   ].sort((a, b) => b.updated.localeCompare(a.updated)).slice(0, 6), [apps, assets, skills, keys]);
-  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const filtered = activeApps.filter((app) => (category === '全部' || app.category === category)
-    && terms.every((term) => [app.name, app.description ?? '', app.category, app.specialties.join(' ')].join(' ').toLowerCase().includes(term)))
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+
+  // Memoize filtered registry and avoid temporary array join overhead during search
+  const filtered = useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+    const terms = trimmed ? trimmed.split(/\s+/).filter(Boolean) : [];
+    return activeApps
+      .filter((app) => {
+        if (category !== '全部' && app.category !== category) return false;
+        if (terms.length === 0) return true;
+        const searchText = `${app.name} ${app.description ?? ''} ${app.category} ${app.specialties.join(' ')}`.toLowerCase();
+        return terms.every((term) => searchText.includes(term));
+      })
+      .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  }, [activeApps, category, query]);
 
   return (
     <div className="library-overview">

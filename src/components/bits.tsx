@@ -60,8 +60,15 @@ export function EmptyState({ title, desc, action }: { title: string; desc?: stri
  * 无命中/空 query 时原样返回文本，可安全地与 truncate、line-clamp 混用。
  */
 export function Highlight({ text, query }: { text: string; query: string }) {
-  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if (terms.length === 0 || !text) return <>{text}</>;
+  // Fast path: when text or query is empty, return raw text string directly
+  // to avoid regex splitting, array allocations, and React Fragment wrappers.
+  if (!text || !query) return text;
+  const trimmed = query.trim();
+  if (!trimmed) return text;
+
+  const terms = trimmed.toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return text;
+
   const lower = text.toLowerCase();
   const ranges: Array<[number, number]> = [];
   for (const t of terms) {
@@ -73,7 +80,7 @@ export function Highlight({ text, query }: { text: string; query: string }) {
       i = idx + t.length;
     }
   }
-  if (ranges.length === 0) return <>{text}</>;
+  if (ranges.length === 0) return text;
   // 合并重叠/相邻区间（多词命中同一位置时不嵌套 mark）
   ranges.sort((a, b) => a[0] - b[0]);
   const merged: Array<[number, number]> = [];

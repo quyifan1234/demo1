@@ -1,0 +1,3 @@
+## 2025-05-18 - Search Highlight Fast-Path and Filter String Allocation
+**Learning:** High-frequency list item helper components like `Highlight` are called hundreds of times during rendering. Returning raw primitive strings directly for empty/whitespace search queries bypasses regex splitting, array allocations, and React Fragment (`<>{text}</>`) creation. In overview dashboard views, string concatenation inside search filter loops (`[...].join(' ')`) creates unnecessary garbage collector pressure compared to a single template literal check.
+**Action:** Always short-circuit formatting/highlighting components when query string is empty, and construct search target strings once per item rather than once per search term.
