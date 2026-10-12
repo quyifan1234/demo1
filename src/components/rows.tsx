@@ -1,4 +1,5 @@
-import { Search, ChevronRight } from 'lucide-react';
+import { useRef } from 'react';
+import { Search, ChevronRight, X } from 'lucide-react';
 import { Input } from './ui/input';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { cn } from '../lib/utils';
@@ -19,19 +20,38 @@ export function CapsuleSearch({
   onChange: (v: string) => void;
   placeholder?: string;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleClear = () => {
+    onChange('');
+    inputRef.current?.focus();
+  };
+
   return (
-    <div className="search-input-wrap">
+    <div className="search-input-wrap relative">
       <Search
         size={16}
         className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
       />
       <Input
+        ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder ?? '搜索资料库'}
         type="search"
+        className={cn(value && 'pr-9')}
       />
+      {value && (
+        <button
+          type="button"
+          onClick={handleClear}
+          aria-label="清空搜索"
+          className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <X size={14} aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }
