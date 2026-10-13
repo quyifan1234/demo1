@@ -76,8 +76,31 @@ function KeysPage() {
     setTimeout(() => setCopied((p) => (p === id ? null : p)), 1500);
   };
 
-  const appNames = (keyId: string) =>
-    links.filter((l) => l.key_id === keyId).map((l) => apps.find((a) => a.id === l.app_id)?.name).filter(Boolean) as string[];
+  // 性能优化：将原本每个 Key 渲染时重复进行 O(M * A) 嵌套查找（且每行重复调用两次）的操作，
+  // 优化为基于 useMemo 构建 Map<keyId, string[]> 索引。
+  // 算法复杂度从 O(N * M * A) 降为 O(A + M) 的单次 Map 构建 + O(1) 查找。
+  const keyAppNamesMap = useMemo(() => {
+    const appMap = new Map<string, string>();
+    for (const app of apps) {
+      if (app.id && app.name) {
+        appMap.set(app.id, app.name);
+      }
+    }
+
+    const map = new Map<string, string[]>();
+    for (const link of links) {
+      const name = appMap.get(link.app_id);
+      if (name) {
+        let list = map.get(link.key_id);
+        if (!list) {
+          list = [];
+          map.set(link.key_id, list);
+        }
+        list.push(name);
+      }
+    }
+    return map;
+  }, [apps, links]);
 
   if (!isList) return <Outlet />;
 
@@ -111,7 +134,7 @@ function KeysPage() {
                   </div>
                   <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
                     {k.platform ? <Highlight text={k.platform} query={q} /> : '未分类平台'}
-                    {appNames(k.id).length > 0 ? ` · ${appNames(k.id).join('、')}` : ''}
+                    {keyAppNamesMap.get(k.id)?.length ? ` · ${keyAppNamesMap.get(k.id)!.join('、')}` : ''}
                   </p>
                   <div className="mt-1.5"><MaskedKey value={k.key_value} revealed={revealed.includes(k.id)} /></div>
                 </div>
