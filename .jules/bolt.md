@@ -1,0 +1,3 @@
+## 2025-05-18 - Avoid network calls in repeated auth helper functions
+**Learning:** `supabase.auth.getUser()` makes an explicit remote network request every time it is called to re-verify the auth server token, whereas `supabase.auth.getSession()` retrieves the active session synchronously from memory/localStorage. In helper functions like `uid()` that are invoked before every database query/mutation, `getUser()` creates an extra round-trip HTTP overhead per operation.
+**Action:** Use `supabase.auth.getSession()` in repeated query helpers when only the local user ID is needed to avoid redundant HTTP requests and reduce operation latency.
