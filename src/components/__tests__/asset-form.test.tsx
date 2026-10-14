@@ -24,4 +24,14 @@ describe('AssetForm', () => {
       description: 'desc', tags: ['t1'], is_favorite: true
     });
   });
+
+  it('renders tag remove buttons with localized accessible aria-labels', () => {
+    const initial = {
+      name: 'Test Asset', url: '', category: '其他', description: '',
+      tags: ['提示词', '代码'], is_favorite: false
+    };
+    render(<AssetForm initial={initial} onSubmit={async () => {}} busy={false} submitLabel="保存" />);
+    expect(screen.getByRole('button', { name: '移除标签 提示词' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '移除标签 代码' })).toBeTruthy();
+  });
 });

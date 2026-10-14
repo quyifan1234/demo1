@@ -144,7 +144,7 @@ function SkillDetail() {
                 <div className="flex gap-2 flex-wrap mt-2">
                   {tags.map((t) => (
                     <Badge key={t} variant="secondary" className="gap-1 rounded-full">{t}
-                      <button type="button" aria-label="Remove tag" onClick={() => setTags(tags.filter((x) => x !== t))}><X size={12} /></button>
+                      <button type="button" aria-label={`移除标签 ${t}`} onClick={() => setTags(tags.filter((x) => x !== t))}><X size={12} /></button>
                     </Badge>
                   ))}
                 </div>
