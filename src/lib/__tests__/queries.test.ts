@@ -21,6 +21,7 @@ vi.mock('../supabase', () => {
     supabase: {
       auth: {
         getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user-id' } } }),
+        getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: 'test-user-id' } } } }),
       },
       from: vi.fn(() => ({
         insert: vi.fn().mockResolvedValue({ error: null }),

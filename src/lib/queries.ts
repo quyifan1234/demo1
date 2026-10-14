@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
 import type { AiApp, ApiKey, AppKeyLink, AppOutput, Profile, Skill, SkillAppLink, UserPrefs, Asset } from './types';
 
-const uid = () => supabase.auth.getUser().then(({ data }) => data.user?.id ?? '');
+// 性能优化：使用 getSession 获取当前本地会话中的 user.id，
+// 避免 getUser() 每次均发起远程 Auth API 网络请求，从而显著提升数据查询与交互速度。
+const uid = () => supabase.auth.getSession().then(({ data }) => data.session?.user?.id ?? '');
 
 async function list<T>(table: string): Promise<T[]> {
   const userId = await uid();
