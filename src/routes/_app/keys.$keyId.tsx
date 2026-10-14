@@ -102,7 +102,7 @@ function KeyDetail() {
             <Input type={show ? 'text' : 'password'} value={value} onChange={(e) => setValue(e.target.value)}
               placeholder="粘贴密钥" className="pr-10 font-mono" />
             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-              onClick={() => setShow(!show)} title={show ? '隐藏' : '显示'}>
+              onClick={() => setShow(!show)} title={show ? '隐藏' : '显示'} aria-label={show ? '隐藏密钥' : '显示密钥'}>
               {show ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
